@@ -191,16 +191,16 @@ export default function Profile() {
         }}
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
-        className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12 py-2"
+        className="fixed top-0 left-0 w-full h-16 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
       >
         <div className="flex items-center gap-4">
           <img 
             src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
             alt="Bot Bash Logo" 
-            className="h-14 md:h-20 object-contain"
+            className="h-8 md:h-10 object-contain"
           />
         </div>
-        <nav className="hidden md:flex items-center gap-8 font-tech text-2xl uppercase italic tracking-wider">
+        <nav className="hidden md:flex items-center gap-8 font-tech text-lg lg:text-xl uppercase italic tracking-wider">
           <a href="/" className="hover:text-[#E427F5] transition-colors">Home</a>
         </nav>
         <div className="flex items-center gap-3 md:gap-4">
@@ -219,7 +219,7 @@ export default function Profile() {
         </div>
       </motion.header>
 
-      <main className="pt-40 pb-24 px-6 md:px-12 max-w-4xl mx-auto">
+      <main className="pt-20 md:pt-24 pb-24 px-6 md:px-12 max-w-4xl mx-auto">
         {!user ? (
           <div className="bg-[#111] border-4 border-[#222] p-8 relative max-w-md mx-auto">
             {/* Decorative corners */}

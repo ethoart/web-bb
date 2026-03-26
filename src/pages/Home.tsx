@@ -101,15 +101,15 @@ export default function Home() {
     <div className="relative min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden font-sans selection:bg-[#E427F5] selection:text-black">
       
       {/* Top Navigation Bar */}
-      <header className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12 py-2">
+      <header className="fixed top-0 left-0 w-full h-16 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12">
         <div className="flex items-center gap-4">
           <img 
             src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
             alt="Bot Bash Logo" 
-            className="h-14 md:h-20 object-contain"
+            className="h-8 md:h-10 object-contain"
           />
         </div>
-        <nav className="hidden md:flex items-center gap-8 font-tech text-2xl uppercase italic tracking-wider">
+        <nav className="hidden md:flex items-center gap-8 font-tech text-lg lg:text-xl uppercase italic tracking-wider">
           <a href="#register" className="hover:text-[#E427F5] transition-colors">Register</a>
           <a href="#prizes" className="hover:text-[#E427F5] transition-colors">Prizes</a>
           <a href="#gallery" className="hover:text-[#E427F5] transition-colors">Gallery</a>
@@ -130,7 +130,7 @@ export default function Home() {
       </header>
 
       {/* 1. Hero Banner Section */}
-      <section className="relative w-full h-[90vh] md:h-screen flex items-center justify-center pt-20 overflow-hidden bg-[#111]">
+      <section className="relative w-full h-[90vh] md:h-screen flex items-center justify-center pt-16 overflow-hidden bg-[#111]">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#E427F5 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         

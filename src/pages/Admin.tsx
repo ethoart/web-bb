@@ -434,7 +434,7 @@ export default function Admin() {
         }}
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
-        className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12 py-1"
+        className="fixed top-0 left-0 w-full h-16 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
       >
         <div className="flex items-center gap-4">
           <img 
@@ -447,9 +447,9 @@ export default function Admin() {
         <a href="/" className="font-tech text-lg uppercase italic hover:text-[#E427F5] transition-colors">Back to Site</a>
       </motion.header>
 
-      <div className="flex pt-[60px] md:pt-[70px]">
+      <div className="flex pt-16">
         {/* Sidebar */}
-        <aside className="w-64 bg-black border-r-4 border-[#333] p-6 fixed top-[60px] md:top-[70px] h-[calc(100vh-60px)] md:h-[calc(100vh-70px)] overflow-y-auto hidden md:block">
+        <aside className="w-64 bg-black border-r-4 border-[#333] p-6 fixed top-16 h-[calc(100vh-64px)] overflow-y-auto hidden md:block">
           <nav className="space-y-4 font-tech uppercase italic">
             <button 
               onClick={() => setActiveTab('registrations')}
