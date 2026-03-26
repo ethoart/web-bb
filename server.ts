@@ -188,27 +188,29 @@ const SettingsSchema = new mongoose.Schema({
 });
 const Settings = mongoose.model('Settings', SettingsSchema);
 
-const GalleryImageSchema = new mongoose.Schema({
+const GalleryItemSchema = new mongoose.Schema({
   url: { type: String, required: true },
   type: { type: String, enum: ['upload', 'link'], required: true },
+  mediaType: { type: String, enum: ['image', 'video'], default: 'image' },
   createdAt: { type: Date, default: Date.now }
 });
-const GalleryImage = mongoose.model('GalleryImage', GalleryImageSchema);
+const GalleryItem = mongoose.model('GalleryItem', GalleryItemSchema);
 
 // In-memory mock data
 const mockRegistrations: any[] = [];
-let mockGalleryImages: any[] = [];
+let mockGalleryItems: any[] = [];
 let mockSettings: any = {
   prizePoolFirst: '$500,000',
   isRevealed: false,
   bannerImage: 'https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file.png?raw=true',
   bannerText: 'COMING SOON',
-  sponsors: '',
+  sponsors: [],
   facebookLink: 'https://www.facebook.com/profile.php?id=61573020699132',
   instagramLink: '#',
   youtubeLink: '#',
   eventDate: 'To Be Announced (2026)',
-  eventLocation: 'Royal MAS Arena, Colombo'
+  eventLocation: 'Royal MAS Arena, Colombo',
+  logoSize: '14'
 };
 
 // API Routes
@@ -225,10 +227,10 @@ app.post('/api/admin/upload', upload.single('image'), async (req, res) => {
 app.get('/api/gallery', async (req, res) => {
   try {
     if (isDbConnected) {
-      const images = await GalleryImage.find().sort({ createdAt: -1 });
-      res.json(images);
+      const items = await GalleryItem.find().sort({ createdAt: -1 });
+      res.json(items);
     } else {
-      res.json(mockGalleryImages.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+      res.json(mockGalleryItems.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     }
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -239,16 +241,17 @@ app.post('/api/admin/gallery/upload', upload.single('image'), async (req, res) =
   try {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     
+    const { mediaType = 'image' } = req.body;
     const url = `/uploads/${req.file.filename}`;
-    let newImage;
+    let newItem;
     if (isDbConnected) {
-      newImage = new GalleryImage({ url, type: 'upload' });
-      await newImage.save();
+      newItem = new GalleryItem({ url, type: 'upload', mediaType });
+      await newItem.save();
     } else {
-      newImage = { _id: Date.now().toString(), url, type: 'upload', createdAt: new Date() };
-      mockGalleryImages.push(newImage);
+      newItem = { _id: Date.now().toString(), url, type: 'upload', mediaType, createdAt: new Date() };
+      mockGalleryItems.push(newItem);
     }
-    res.json({ success: true, image: newImage });
+    res.json({ success: true, image: newItem });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -256,18 +259,18 @@ app.post('/api/admin/gallery/upload', upload.single('image'), async (req, res) =
 
 app.post('/api/admin/gallery/link', async (req, res) => {
   try {
-    const { url } = req.body;
+    const { url, mediaType = 'image' } = req.body;
     if (!url) return res.status(400).json({ error: 'URL is required' });
     
-    let newImage;
+    let newItem;
     if (isDbConnected) {
-      newImage = new GalleryImage({ url, type: 'link' });
-      await newImage.save();
+      newItem = new GalleryItem({ url, type: 'link', mediaType });
+      await newItem.save();
     } else {
-      newImage = { _id: Date.now().toString(), url, type: 'link', createdAt: new Date() };
-      mockGalleryImages.push(newImage);
+      newItem = { _id: Date.now().toString(), url, type: 'link', mediaType, createdAt: new Date() };
+      mockGalleryItems.push(newItem);
     }
-    res.json({ success: true, image: newImage });
+    res.json({ success: true, image: newItem });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -276,30 +279,30 @@ app.post('/api/admin/gallery/link', async (req, res) => {
 app.delete('/api/admin/gallery/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    let image;
+    let item;
     
     if (isDbConnected) {
-      image = await GalleryImage.findById(id);
-      if (!image) return res.status(404).json({ error: 'Image not found' });
+      item = await GalleryItem.findById(id);
+      if (!item) return res.status(404).json({ error: 'Item not found' });
       
-      if (image.type === 'upload') {
-        const filePath = path.join(process.cwd(), image.url);
+      if (item.type === 'upload') {
+        const filePath = path.join(process.cwd(), item.url);
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       }
-      await GalleryImage.findByIdAndDelete(id);
+      await GalleryItem.findByIdAndDelete(id);
     } else {
-      const index = mockGalleryImages.findIndex(img => img._id === id);
-      if (index === -1) return res.status(404).json({ error: 'Image not found' });
+      const index = mockGalleryItems.findIndex(img => img._id === id);
+      if (index === -1) return res.status(404).json({ error: 'Item not found' });
       
-      image = mockGalleryImages[index];
-      if (image.type === 'upload') {
-        const filePath = path.join(process.cwd(), image.url);
+      item = mockGalleryItems[index];
+      if (item.type === 'upload') {
+        const filePath = path.join(process.cwd(), item.url);
         if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
       }
-      mockGalleryImages.splice(index, 1);
+      mockGalleryItems.splice(index, 1);
     }
     
-    res.json({ success: true, message: 'Image deleted' });
+    res.json({ success: true, message: 'Item deleted' });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -786,6 +789,39 @@ app.post('/api/admin/settings', async (req, res) => {
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  const baseUrl = 'https://ais-pre-zxdeh3hmb46eheoj3tzas4-181219863575.asia-east1.run.app';
+  const sitemap = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>${baseUrl}/</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/profile</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/privacy</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>${baseUrl}/terms</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>`;
+  res.header('Content-Type', 'application/xml');
+  res.send(sitemap);
 });
 
 async function startServer() {

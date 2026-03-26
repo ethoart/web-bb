@@ -18,7 +18,7 @@ export default function Admin() {
   const [prizePoolFirst, setPrizePoolFirst] = useState('');
   const [isRevealed, setIsRevealed] = useState(false);
   const [bannerImage, setBannerImage] = useState('https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file.png?raw=true');
-  const [sponsors, setSponsors] = useState('TECH TO OXYGEN,ROBO CORP,CYBER DYNAMICS,MECHA SYSTEMS');
+  const [sponsors, setSponsors] = useState<string[]>([]);
   const [facebookLink, setFacebookLink] = useState('https://www.facebook.com/profile.php?id=61573020699132');
   const [instagramLink, setInstagramLink] = useState('#');
   const [youtubeLink, setYoutubeLink] = useState('#');
@@ -46,6 +46,7 @@ export default function Admin() {
   // Gallery State
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [galleryLink, setGalleryLink] = useState('');
+  const [galleryMediaType, setGalleryMediaType] = useState<'image' | 'video'>('image');
   const [galleryFile, setGalleryFile] = useState<File | null>(null);
   const [uploadingGallery, setUploadingGallery] = useState(false);
 
@@ -140,7 +141,7 @@ export default function Admin() {
       const data = await res.json();
       if (data.url) {
         if (type === 'banner') setBannerImage(data.url);
-        else setSponsors(data.url);
+        else setSponsors(prev => [...prev, data.url]);
       }
     } catch (err) {
       console.error('Error uploading file:', err);
@@ -160,7 +161,9 @@ export default function Admin() {
       if (setData.prizePoolFirst) setPrizePoolFirst(setData.prizePoolFirst);
       if (setData.isRevealed !== undefined) setIsRevealed(setData.isRevealed);
       if (setData.bannerImage) setBannerImage(setData.bannerImage);
-      if (setData.sponsors) setSponsors(setData.sponsors);
+      if (setData.sponsors) {
+        setSponsors(Array.isArray(setData.sponsors) ? setData.sponsors : (typeof setData.sponsors === 'string' ? setData.sponsors.split(',') : []));
+      }
       if (setData.facebookLink) setFacebookLink(setData.facebookLink);
       if (setData.instagramLink) setInstagramLink(setData.instagramLink);
       if (setData.youtubeLink) setYoutubeLink(setData.youtubeLink);
@@ -326,7 +329,7 @@ export default function Admin() {
       const res = await fetch('/api/admin/gallery/link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: galleryLink })
+        body: JSON.stringify({ url: galleryLink, mediaType: galleryMediaType })
       });
       if (res.ok) {
         setGalleryLink('');
@@ -346,6 +349,7 @@ export default function Admin() {
     try {
       const formData = new FormData();
       formData.append('image', galleryFile);
+      formData.append('mediaType', galleryMediaType);
       const res = await fetch('/api/admin/gallery/upload', {
         method: 'POST',
         body: formData
@@ -392,7 +396,7 @@ export default function Admin() {
             <img 
               src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
               alt="Bot Bash Logo" 
-              className="h-8 object-contain"
+              className="h-16 object-contain"
             />
           </div>
           <h2 className="text-3xl font-tech font-bold uppercase italic tracking-wider text-center mb-6 text-[#E427F5]">Admin Login</h2>
@@ -825,12 +829,28 @@ export default function Admin() {
                     {/* Upload File */}
                     <div className="bg-black p-8 border-2 border-[#333]">
                       <h3 className="font-tech text-xl uppercase italic font-bold text-white mb-6 flex items-center gap-2">
-                        <Upload className="w-5 h-5 text-[#E427F5]" /> Upload Image
+                        <Upload className="w-5 h-5 text-[#E427F5]" /> Upload Media
                       </h3>
                       <form onSubmit={handleUploadGalleryFile} className="space-y-4">
+                        <div className="flex gap-4 mb-4">
+                          <button
+                            type="button"
+                            onClick={() => setGalleryMediaType('image')}
+                            className={`flex-1 py-2 font-tech uppercase italic border-2 transition-colors ${galleryMediaType === 'image' ? 'bg-[#E427F5] text-black border-[#E427F5]' : 'bg-black text-white/60 border-[#333]'}`}
+                          >
+                            Image
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGalleryMediaType('video')}
+                            className={`flex-1 py-2 font-tech uppercase italic border-2 transition-colors ${galleryMediaType === 'video' ? 'bg-[#E427F5] text-black border-[#E427F5]' : 'bg-black text-white/60 border-[#333]'}`}
+                          >
+                            Video
+                          </button>
+                        </div>
                         <input 
                           type="file" 
-                          accept="image/*"
+                          accept={galleryMediaType === 'image' ? "image/*" : "video/*"}
                           onChange={e => setGalleryFile(e.target.files?.[0] || null)}
                           className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-tech file:italic file:uppercase file:bg-[#E427F5] file:text-black hover:file:bg-white file:transition-colors"
                         />
@@ -849,12 +869,28 @@ export default function Admin() {
                     {/* Add Link */}
                     <div className="bg-black p-8 border-2 border-[#333]">
                       <h3 className="font-tech text-xl uppercase italic font-bold text-white mb-6 flex items-center gap-2">
-                        <LinkIcon className="w-5 h-5 text-[#E427F5]" /> Add Image Link
+                        <LinkIcon className="w-5 h-5 text-[#E427F5]" /> Add Media Link
                       </h3>
                       <form onSubmit={handleAddGalleryLink} className="space-y-4">
+                        <div className="flex gap-4 mb-4">
+                          <button
+                            type="button"
+                            onClick={() => setGalleryMediaType('image')}
+                            className={`flex-1 py-2 font-tech uppercase italic border-2 transition-colors ${galleryMediaType === 'image' ? 'bg-[#E427F5] text-black border-[#E427F5]' : 'bg-black text-white/60 border-[#333]'}`}
+                          >
+                            Image
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setGalleryMediaType('video')}
+                            className={`flex-1 py-2 font-tech uppercase italic border-2 transition-colors ${galleryMediaType === 'video' ? 'bg-[#E427F5] text-black border-[#E427F5]' : 'bg-black text-white/60 border-[#333]'}`}
+                          >
+                            Video
+                          </button>
+                        </div>
                         <input 
                           type="url" 
-                          placeholder="https://example.com/image.jpg"
+                          placeholder={galleryMediaType === 'image' ? "https://example.com/image.jpg" : "https://example.com/video.mp4"}
                           value={galleryLink}
                           onChange={e => setGalleryLink(e.target.value)}
                           className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
@@ -882,23 +918,30 @@ export default function Admin() {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {galleryImages.map((img) => (
                         <div key={img._id} className="relative group aspect-square bg-black border-2 border-[#333] overflow-hidden">
-                          <img 
-                            src={img.url} 
-                            alt="Gallery" 
-                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                            referrerPolicy="no-referrer"
-                          />
+                          {img.mediaType === 'video' ? (
+                            <div className="w-full h-full flex items-center justify-center bg-[#111] text-[#E427F5]">
+                              <Camera className="w-12 h-12" />
+                            </div>
+                          ) : (
+                            <img 
+                              src={img.url} 
+                              alt="Gallery" 
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                              referrerPolicy="no-referrer"
+                            />
+                          )}
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                             <button 
                               onClick={() => handleDeleteGalleryImage(img._id)}
                               className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition-colors transform hover:scale-110"
-                              title="Delete Image"
+                              title="Delete Item"
                             >
                               <Trash2 className="w-6 h-6" />
                             </button>
                           </div>
-                          <div className="absolute bottom-0 left-0 w-full bg-black/80 p-2 text-xs font-tech uppercase italic text-[#E427F5] truncate">
-                            {img.type}
+                          <div className="absolute bottom-0 left-0 w-full bg-black/80 p-2 text-[10px] font-tech uppercase italic text-[#E427F5] flex justify-between items-center">
+                            <span>{img.type}</span>
+                            <span className="bg-[#E427F5] text-black px-1 font-bold">{img.mediaType}</span>
                           </div>
                         </div>
                       ))}
@@ -972,16 +1015,29 @@ export default function Admin() {
 
                     <div className="space-y-4">
                       <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
-                        Sponsors Logo Image
+                        Sponsor Logos
                       </label>
                       <div className="flex flex-col gap-4">
-                        <input 
-                          type="text" 
-                          value={sponsors}
-                          onChange={e => setSponsors(e.target.value)}
-                          className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-xl font-tech"
-                          placeholder="URL: https://example.com/sponsors.png"
-                        />
+                        <div className="flex gap-2">
+                          <input 
+                            type="text" 
+                            id="newSponsorUrl"
+                            className="flex-1 bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-sm font-tech"
+                            placeholder="Logo URL: https://example.com/logo.png"
+                          />
+                          <button
+                            onClick={() => {
+                              const input = document.getElementById('newSponsorUrl') as HTMLInputElement;
+                              if (input.value) {
+                                setSponsors(prev => [...prev, input.value]);
+                                input.value = '';
+                              }
+                            }}
+                            className="bg-[#E427F5] text-black px-4 font-tech font-bold uppercase italic"
+                          >
+                            Add
+                          </button>
+                        </div>
                         <div className="flex items-center gap-4">
                           <label className="flex-1 bg-[#111] border-2 border-[#333] px-4 py-3 text-white/60 cursor-pointer hover:border-[#E427F5] transition-colors font-tech uppercase italic text-sm flex items-center gap-2">
                             <Upload className="w-4 h-4" /> Upload New Logo
@@ -994,12 +1050,19 @@ export default function Admin() {
                           </label>
                         </div>
                       </div>
-                      {sponsors && (
-                        <div className="mt-4">
-                          <p className="text-sm text-white/50 mb-2 font-tech uppercase italic">Preview:</p>
-                          <img src={sponsors} alt="Sponsors Preview" className="h-32 object-contain bg-[#111] border-2 border-[#333] p-2" />
-                        </div>
-                      )}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
+                        {sponsors.map((url, idx) => (
+                          <div key={idx} className="relative group bg-[#111] border-2 border-[#333] p-2">
+                            <img src={url} alt={`Sponsor ${idx}`} className="h-20 w-full object-contain" />
+                            <button
+                              onClick={() => setSponsors(prev => prev.filter((_, i) => i !== idx))}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="space-y-4">
@@ -1075,7 +1138,7 @@ export default function Admin() {
                         <input 
                           type="range" 
                           min="6" 
-                          max="24" 
+                          max="48" 
                           step="1"
                           value={logoSize}
                           onChange={e => setLogoSize(e.target.value)}
@@ -1231,7 +1294,7 @@ export default function Admin() {
                       <div className="flex gap-2 pt-2">
                         <button
                           onClick={() => handleRobotStatusChange(selectedTeam._id, 'approved')}
-                          className="flex-1 bg-green-500 text-black font-tech uppercase italic font-bold py-2 text-[10px] md:text-sm hover:bg-white transition-colors"
+                          className="flex-1 bg-[#22C55E] text-black font-tech uppercase italic font-bold py-2 text-[10px] md:text-sm hover:bg-white transition-colors"
                         >
                           Approve Robot
                         </button>

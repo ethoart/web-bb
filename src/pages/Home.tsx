@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Gift, Trophy, Medal, Users, Calendar, MapPin, ChevronRight, CheckCircle2, AlertCircle, Search, ChevronDown, User } from 'lucide-react';
+import { Gift, Trophy, Medal, Users, Calendar, MapPin, ChevronRight, CheckCircle2, AlertCircle, Search, ChevronDown, User, Camera, X } from 'lucide-react';
 import { countries } from 'countries-list';
 
 import Footer from '../components/Footer';
@@ -17,7 +17,7 @@ export default function Home() {
   const [prizePool, setPrizePool] = useState({ first: '???' });
   const [isRevealed, setIsRevealed] = useState(false);
   const [bannerImage, setBannerImage] = useState('https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file.png?raw=true');
-  const [sponsors, setSponsors] = useState('');
+  const [sponsors, setSponsors] = useState<string[]>([]);
   const [facebookLink, setFacebookLink] = useState('https://www.facebook.com/profile.php?id=61573020699132');
   const [instagramLink, setInstagramLink] = useState('#');
   const [youtubeLink, setYoutubeLink] = useState('#');
@@ -26,6 +26,7 @@ export default function Home() {
   const [bannerText, setBannerText] = useState('COMING SOON');
   const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -34,7 +35,9 @@ export default function Home() {
         if (data.prizePoolFirst) setPrizePool(prev => ({ ...prev, first: data.prizePoolFirst }));
         if (data.isRevealed !== undefined) setIsRevealed(data.isRevealed);
         if (data.bannerImage) setBannerImage(data.bannerImage);
-        if (data.sponsors !== undefined) setSponsors(data.sponsors);
+        if (data.sponsors !== undefined) {
+          setSponsors(Array.isArray(data.sponsors) ? data.sponsors : (typeof data.sponsors === 'string' ? data.sponsors.split(',') : []));
+        }
         if (data.facebookLink) setFacebookLink(data.facebookLink);
         if (data.instagramLink) setInstagramLink(data.instagramLink);
         if (data.youtubeLink) setYoutubeLink(data.youtubeLink);
@@ -346,7 +349,7 @@ export default function Home() {
                         value={regForm.captainName}
                         onChange={e => setRegForm({...regForm, captainName: e.target.value})}
                         className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
-                        placeholder="John Doe"
+                        placeholder="YOUR CAPTAIN NAME"
                       />
                     </div>
                     <div className="space-y-1">
@@ -357,7 +360,7 @@ export default function Home() {
                         value={regForm.phone}
                         onChange={e => setRegForm({...regForm, phone: e.target.value})}
                         className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
-                        placeholder="+1 234 567 8900"
+                        placeholder="+94"
                       />
                     </div>
                   </div>
@@ -370,7 +373,7 @@ export default function Home() {
                         value={regForm.email}
                         onChange={e => setRegForm({...regForm, email: e.target.value})}
                         className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
-                        placeholder="john@example.com"
+                        placeholder="mail@gamil.com"
                       />
                     </div>
                     <div className="space-y-1">
@@ -464,19 +467,26 @@ export default function Home() {
               galleryImages.map((img) => (
                 <div 
                   key={img._id}
-                  className="aspect-video bg-[#111] border-2 border-[#333] overflow-hidden relative group hover:border-[#E427F5] transition-colors"
+                  onClick={() => setSelectedMedia(img)}
+                  className="aspect-video bg-[#111] border-2 border-[#333] overflow-hidden relative group hover:border-[#E427F5] transition-colors cursor-pointer"
                 >
-                  <img 
-                    src={img.url} 
-                    alt="Gallery Image"
-                    loading="lazy"
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                    referrerPolicy="no-referrer"
-                  />
+                  {img.mediaType === 'video' ? (
+                    <div className="w-full h-full flex items-center justify-center bg-[#111] text-[#E427F5]">
+                      <Camera className="w-16 h-16" />
+                    </div>
+                  ) : (
+                    <img 
+                      src={img.url} 
+                      alt="Gallery Image"
+                      loading="lazy"
+                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                    <a href={img.url} target="_blank" rel="noreferrer" className="text-[#E427F5] font-tech text-3xl font-bold italic uppercase transform -skew-x-12 hover:text-white transition-colors">
-                      VIEW IMAGE
-                    </a>
+                    <span className="text-[#E427F5] font-tech text-3xl font-bold italic uppercase transform -skew-x-12 hover:text-white transition-colors">
+                      VIEW {img.mediaType === 'video' ? 'VIDEO' : 'IMAGE'}
+                    </span>
                   </div>
                 </div>
               ))
@@ -503,6 +513,49 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Lightbox */}
+      <AnimatePresence>
+        {selectedMedia && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/95 flex items-center justify-center p-4"
+            onClick={() => setSelectedMedia(null)}
+          >
+            <button 
+              className="absolute top-8 right-8 text-white hover:text-[#E427F5] transition-colors"
+              onClick={() => setSelectedMedia(null)}
+            >
+              <X className="w-10 h-10" />
+            </button>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="max-w-5xl w-full max-h-[90vh] flex items-center justify-center"
+              onClick={e => e.stopPropagation()}
+            >
+              {selectedMedia.mediaType === 'video' ? (
+                <video 
+                  src={selectedMedia.url} 
+                  controls 
+                  autoPlay 
+                  className="max-w-full max-h-[80vh] border-2 border-[#E427F5] shadow-[0_0_30px_rgba(228,39,245,0.3)]"
+                />
+              ) : (
+                <img 
+                  src={selectedMedia.url} 
+                  alt="Gallery Full" 
+                  className="max-w-full max-h-[80vh] object-contain border-2 border-[#E427F5] shadow-[0_0_30px_rgba(228,39,245,0.3)]"
+                  referrerPolicy="no-referrer"
+                />
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 5. Sponsors */}
       <section className="relative z-30 py-24 px-6 md:px-12 bg-[#E427F5] text-black">
         <div className="max-w-6xl mx-auto text-center">
@@ -510,8 +563,10 @@ export default function Home() {
             POWERED BY
           </h2>
           <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24">
-            {sponsors ? (
-              <img src={sponsors} alt="Sponsors" className="max-w-full h-auto max-h-32 object-contain" />
+            {sponsors.length > 0 ? (
+              sponsors.map((url, idx) => (
+                <img key={idx} src={url} alt={`Sponsor ${idx}`} className="max-w-full h-auto max-h-24 object-contain" referrerPolicy="no-referrer" />
+              ))
             ) : (
               <>
                 <div className="text-3xl md:text-4xl font-black tracking-tighter uppercase">TECH TO OXYGEN</div>
