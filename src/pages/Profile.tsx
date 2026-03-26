@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { LogOut, User, Shield, CheckCircle2, XCircle, Clock, QrCode, Bot, Upload, Info } from 'lucide-react';
+import { LogOut, User, Shield, CheckCircle2, XCircle, Clock, QrCode, Bot, Upload, Info, Home } from 'lucide-react';
 
 import Footer from '../components/Footer';
 
@@ -197,17 +197,26 @@ export default function Profile() {
           <img 
             src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
             alt="Bot Bash Logo" 
-            className="h-16 md:h-24 object-contain"
+            className="h-14 md:h-20 object-contain"
           />
         </div>
         <nav className="hidden md:flex items-center gap-8 font-tech text-2xl uppercase italic tracking-wider">
           <a href="/" className="hover:text-[#E427F5] transition-colors">Home</a>
         </nav>
-        {user && (
-          <button onClick={handleLogout} className="bg-[#E427F5] text-black font-tech text-xl uppercase italic font-bold px-6 py-2 hover:bg-white transition-colors transform -skew-x-12 flex items-center gap-2">
-            <span className="block transform skew-x-12 flex items-center gap-2"><LogOut className="w-5 h-5" /> Logout</span>
-          </button>
-        )}
+        <div className="flex items-center gap-3 md:gap-4">
+          <a 
+            href="/" 
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#E427F5] text-[#E427F5] hover:bg-[#E427F5] hover:text-black transition-all duration-300"
+            title="Home"
+          >
+            <Home className="w-5 h-5" />
+          </a>
+          {user && (
+            <button onClick={handleLogout} className="bg-[#E427F5] text-black font-tech text-lg md:text-xl uppercase italic font-bold px-4 md:px-6 py-2 hover:bg-white transition-colors transform -skew-x-12 flex items-center gap-2">
+              <span className="block transform skew-x-12 flex items-center gap-2"><LogOut className="w-5 h-5" /> Logout</span>
+            </button>
+          )}
+        </div>
       </motion.header>
 
       <main className="pt-40 pb-24 px-6 md:px-12 max-w-4xl mx-auto">

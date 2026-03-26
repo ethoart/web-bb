@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { Gift, Trophy, Medal, Users, Calendar, MapPin, ChevronRight, CheckCircle2, AlertCircle, Search, ChevronDown } from 'lucide-react';
+import { Gift, Trophy, Medal, Users, Calendar, MapPin, ChevronRight, CheckCircle2, AlertCircle, Search, ChevronDown, User } from 'lucide-react';
 import { countries } from 'countries-list';
 
 import Footer from '../components/Footer';
@@ -106,7 +106,7 @@ export default function Home() {
           <img 
             src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
             alt="Bot Bash Logo" 
-            className="h-16 md:h-24 object-contain"
+            className="h-14 md:h-20 object-contain"
           />
         </div>
         <nav className="hidden md:flex items-center gap-8 font-tech text-2xl uppercase italic tracking-wider">
@@ -115,9 +115,18 @@ export default function Home() {
           <a href="#gallery" className="hover:text-[#E427F5] transition-colors">Gallery</a>
           <a href="/profile" className="hover:text-[#E427F5] transition-colors">Profile</a>
         </nav>
-        <a href="#register" className="bg-[#E427F5] text-black font-tech text-xl md:text-2xl uppercase italic font-bold px-6 py-2 hover:bg-white transition-colors transform -skew-x-12">
-          <span className="block transform skew-x-12">Enter Now</span>
-        </a>
+        <div className="flex items-center gap-3 md:gap-4">
+          <a 
+            href="/profile" 
+            className="md:hidden flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#E427F5] text-[#E427F5] hover:bg-[#E427F5] hover:text-black transition-all duration-300"
+            title="Profile / Login"
+          >
+            <User className="w-5 h-5" />
+          </a>
+          <a href="#register" className="bg-[#E427F5] text-black font-tech text-lg md:text-2xl uppercase italic font-bold px-4 md:px-6 py-2 hover:bg-white transition-colors transform -skew-x-12">
+            <span className="block transform skew-x-12">Enter Now</span>
+          </a>
+        </div>
       </header>
 
       {/* 1. Hero Banner Section */}

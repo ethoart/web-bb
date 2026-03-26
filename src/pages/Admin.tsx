@@ -379,7 +379,7 @@ export default function Admin() {
             <img 
               src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
               alt="Bot Bash Logo" 
-              className="h-16 object-contain"
+              className="h-12 object-contain"
             />
           </div>
           <h2 className="text-3xl font-tech font-bold uppercase italic tracking-wider text-center mb-6 text-[#E427F5]">Admin Login</h2>
@@ -440,16 +440,16 @@ export default function Admin() {
           <img 
             src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
             alt="Bot Bash Logo" 
-            className="h-12 md:h-16 object-contain"
+            className="h-8 md:h-10 object-contain"
           />
-          <h1 className="text-2xl md:text-3xl font-tech font-bold uppercase italic tracking-widest text-[#E427F5] hidden sm:block">Admin</h1>
+          <h1 className="text-xl md:text-2xl font-tech font-bold uppercase italic tracking-widest text-[#E427F5] hidden sm:block">Admin</h1>
         </div>
-        <a href="/" className="font-tech text-xl uppercase italic hover:text-[#E427F5] transition-colors">Back to Site</a>
+        <a href="/" className="font-tech text-lg uppercase italic hover:text-[#E427F5] transition-colors">Back to Site</a>
       </motion.header>
 
-      <div className="flex pt-[80px] md:pt-[100px]">
+      <div className="flex pt-[60px] md:pt-[70px]">
         {/* Sidebar */}
-        <aside className="w-64 min-h-[calc(100vh-100px)] bg-black border-r-4 border-[#333] p-6 fixed h-full overflow-y-auto hidden md:block">
+        <aside className="w-64 bg-black border-r-4 border-[#333] p-6 fixed top-[60px] md:top-[70px] h-[calc(100vh-60px)] md:h-[calc(100vh-70px)] overflow-y-auto hidden md:block">
           <nav className="space-y-4 font-tech uppercase italic">
             <button 
               onClick={() => setActiveTab('registrations')}
@@ -520,23 +520,24 @@ export default function Admin() {
                     </div>
                   </div>
 
-                  <div className="bg-black border-2 border-[#333] overflow-x-auto">
+                  {/* Desktop Table View */}
+                  <div className="bg-black border-2 border-[#333] overflow-x-auto hidden lg:block">
                     <table className="w-full text-left border-collapse min-w-[800px]">
                       <thead>
                         <tr className="bg-[#111] border-b-2 border-[#333]">
-                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Team</th>
-                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Robot</th>
-                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Country</th>
-                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Contact</th>
-                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Status</th>
-                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Robot Status</th>
-                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Actions</th>
+                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider text-sm">Team</th>
+                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider text-sm">Robot</th>
+                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider text-sm">Country</th>
+                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider text-sm">Contact</th>
+                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider text-sm">Status</th>
+                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider text-sm">Robot Status</th>
+                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider text-sm">Actions</th>
                         </tr>
                       </thead>
                       <tbody>
                         {registrations.length === 0 ? (
                           <tr>
-                            <td colSpan={6} className="p-8 text-center text-white/40 font-tech italic uppercase">No registrations yet.</td>
+                            <td colSpan={7} className="p-8 text-center text-white/40 font-tech italic uppercase">No registrations yet.</td>
                           </tr>
                         ) : (
                           registrations.map((reg, i) => (
@@ -552,14 +553,14 @@ export default function Admin() {
                               <td className="p-4 font-semibold text-white/80">{reg.robotName}</td>
                               <td className="p-4 text-sm text-white/80">{reg.country || 'N/A'}</td>
                               <td className="p-4 text-sm text-white/60">
-                                <div>{reg.captainName}</div>
-                                <div>{reg.email}</div>
+                                <div className="font-medium text-white/90">{reg.captainName}</div>
+                                <div className="text-xs">{reg.email}</div>
                               </td>
                               <td className="p-4 text-sm font-tech uppercase italic">
                                 {reg.status === 'pending' && <span className="text-yellow-500 font-bold">PENDING</span>}
                                 {reg.status === 'approved' && <span className="text-green-500 font-bold">APPROVED</span>}
                                 {reg.status === 'rejected' && <span className="text-red-500 font-bold">REJECTED</span>}
-                                {reg.participated && <div className="text-xs text-[#E427F5] mt-1">PARTICIPATED</div>}
+                                {reg.participated && <div className="text-[10px] text-[#E427F5] mt-1">PARTICIPATED</div>}
                               </td>
                               <td className="p-4 text-sm font-tech uppercase italic">
                                 {reg.robotStatus === 'pending' && <span className="text-yellow-500 font-bold">PENDING</span>}
@@ -601,6 +602,85 @@ export default function Admin() {
                         )}
                       </tbody>
                     </table>
+                  </div>
+
+                  {/* Mobile Card View */}
+                  <div className="lg:hidden space-y-4">
+                    {registrations.length === 0 ? (
+                      <div className="bg-black border-2 border-[#333] p-8 text-center text-white/40 font-tech italic uppercase">
+                        No registrations yet.
+                      </div>
+                    ) : (
+                      registrations.map((reg, i) => (
+                        <div key={i} className="bg-black border-2 border-[#333] p-4 space-y-4">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <button 
+                                onClick={() => setSelectedTeam(reg)}
+                                className="text-xl font-bold text-[#E427F5] hover:text-white transition-colors text-left block"
+                              >
+                                {reg.teamName}
+                              </button>
+                              <p className="text-white/60 font-tech uppercase italic text-xs mt-1">Robot: {reg.robotName}</p>
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                              <span className={`text-[10px] font-tech uppercase italic font-bold px-2 py-0.5 border ${
+                                reg.status === 'approved' ? 'text-green-500 border-green-500' : 
+                                reg.status === 'rejected' ? 'text-red-500 border-red-500' : 
+                                'text-yellow-500 border-yellow-500'
+                              }`}>
+                                {reg.status}
+                              </span>
+                              {reg.participated && <span className="text-[8px] text-[#E427F5] font-tech uppercase italic">Participated</span>}
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                              <p className="text-white/40 text-[10px] uppercase font-tech italic">Captain</p>
+                              <p className="text-white/80 truncate">{reg.captainName}</p>
+                            </div>
+                            <div>
+                              <p className="text-white/40 text-[10px] uppercase font-tech italic">Country</p>
+                              <p className="text-white/80">{reg.country || 'N/A'}</p>
+                            </div>
+                          </div>
+
+                          <div className="pt-4 border-t border-[#333] flex justify-between items-center">
+                            <div className="flex gap-2">
+                              {reg.status === 'pending' && (
+                                <>
+                                  <button 
+                                    onClick={() => handleStatusChange(reg._id, 'approved')}
+                                    className="p-2 bg-green-500/20 text-green-400 border border-green-500"
+                                  >
+                                    <CheckCircle2 className="w-4 h-4" />
+                                  </button>
+                                  <button 
+                                    onClick={() => handleStatusChange(reg._id, 'rejected')}
+                                    className="p-2 bg-red-500/20 text-red-400 border border-red-500"
+                                  >
+                                    <XCircle className="w-4 h-4" />
+                                  </button>
+                                </>
+                              )}
+                              <button 
+                                onClick={() => handleDeleteRegistration(reg._id)}
+                                className="p-2 bg-red-900/20 text-red-500 border border-red-900"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                            <button 
+                              onClick={() => setSelectedTeam(reg)}
+                              className="text-[#E427F5] font-tech uppercase italic text-xs font-bold"
+                            >
+                              View Full Details
+                            </button>
+                          </div>
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -1009,7 +1089,7 @@ export default function Admin() {
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-[#0A0A0A] border-4 border-[#E427F5] w-full max-w-2xl overflow-hidden relative cursor-default"
+              className="bg-[#0A0A0A] border-4 border-[#E427F5] w-full max-w-2xl max-h-[90vh] overflow-y-auto relative cursor-default"
               onClick={(e) => e.stopPropagation()}
             >
               <button 
@@ -1019,88 +1099,90 @@ export default function Admin() {
                 <XCircle className="w-8 h-8" />
               </button>
               
-              <div className="p-8">
-                <div className="flex items-center gap-4 mb-8">
-                  <div className="bg-[#E427F5] text-black p-3">
-                    <Users className="w-8 h-8" />
+              <div className="p-4 md:p-8">
+                <div className="flex items-center gap-4 mb-6 md:mb-8">
+                  <div className="bg-[#E427F5] text-black p-2 md:p-3">
+                    <Users className="w-6 h-6 md:w-8 md:h-8" />
                   </div>
                   <div>
-                    <h3 className="text-3xl font-tech font-bold uppercase italic tracking-tighter text-white leading-none">
+                    <h3 className="text-2xl md:text-3xl font-tech font-bold uppercase italic tracking-tighter text-white leading-none">
                       {selectedTeam.teamName}
                     </h3>
-                    <p className="text-[#E427F5] font-tech uppercase italic tracking-widest text-sm mt-1">Team Details</p>
+                    <p className="text-[#E427F5] font-tech uppercase italic tracking-widest text-xs md:text-sm mt-1">Team Details</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                  <div className="space-y-4 md:space-y-6">
                     <div>
-                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Robot Name</label>
-                      <p className="text-xl font-bold text-white">{selectedTeam.robotName}</p>
+                      <label className="text-[10px] md:text-xs font-tech uppercase italic text-white/40 block mb-1">Robot Name</label>
+                      <p className="text-lg md:text-xl font-bold text-white">{selectedTeam.robotName}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Country</label>
-                      <p className="text-xl font-bold text-white">{selectedTeam.country || 'N/A'}</p>
+                      <label className="text-[10px] md:text-xs font-tech uppercase italic text-white/40 block mb-1">Country</label>
+                      <p className="text-lg md:text-xl font-bold text-white">{selectedTeam.country || 'N/A'}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Team Members</label>
-                      <p className="text-3xl font-black text-[#E427F5]">{selectedTeam.memberCount || 1}</p>
+                      <label className="text-[10px] md:text-xs font-tech uppercase italic text-white/40 block mb-1">Team Members</label>
+                      <p className="text-2xl md:text-3xl font-black text-[#E427F5]">{selectedTeam.memberCount || 1}</p>
                     </div>
                   </div>
                   
-                  <div className="space-y-6">
+                  <div className="space-y-4 md:space-y-6">
                     <div>
-                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Captain Name</label>
-                      <p className="text-xl font-bold text-white">{selectedTeam.captainName}</p>
+                      <label className="text-[10px] md:text-xs font-tech uppercase italic text-white/40 block mb-1">Captain Name</label>
+                      <p className="text-lg md:text-xl font-bold text-white">{selectedTeam.captainName}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Email Address</label>
-                      <p className="text-lg font-medium text-white break-all">{selectedTeam.email}</p>
+                      <label className="text-[10px] md:text-xs font-tech uppercase italic text-white/40 block mb-1">Email Address</label>
+                      <p className="text-base md:text-lg font-medium text-white break-all">{selectedTeam.email}</p>
                     </div>
                     <div>
-                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Phone Number</label>
-                      <p className="text-xl font-bold text-white">{selectedTeam.phone}</p>
+                      <label className="text-[10px] md:text-xs font-tech uppercase italic text-white/40 block mb-1">Phone Number</label>
+                      <p className="text-lg md:text-xl font-bold text-white">{selectedTeam.phone}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Robot Registration Details */}
-                <div className="mt-8 pt-8 border-t border-[#333]">
-                  <h4 className="text-lg font-tech font-bold uppercase italic text-[#E427F5] mb-4">Robot Registration Details</h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Height</label>
-                        <p className="text-white font-medium">{selectedTeam.robotHeight ? `${selectedTeam.robotHeight} cm` : 'Not provided'}</p>
+                <div className="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-[#333]">
+                  <h4 className="text-base md:text-lg font-tech font-bold uppercase italic text-[#E427F5] mb-4">Robot Registration Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                    <div className="space-y-3 md:space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Height</label>
+                          <p className="text-white font-medium text-sm">{selectedTeam.robotHeight ? `${selectedTeam.robotHeight} cm` : 'N/A'}</p>
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Weight</label>
+                          <p className="text-white font-medium text-sm">{selectedTeam.robotWeight ? `${selectedTeam.robotWeight} kg` : 'N/A'}</p>
+                        </div>
                       </div>
                       <div>
-                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Weight</label>
-                        <p className="text-white font-medium">{selectedTeam.robotWeight ? `${selectedTeam.robotWeight} kg` : 'Not provided'}</p>
+                        <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Dimensions</label>
+                        <p className="text-white font-medium text-sm">{selectedTeam.robotDimensions || 'Not provided'}</p>
                       </div>
                       <div>
-                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Dimensions</label>
-                        <p className="text-white font-medium">{selectedTeam.robotDimensions || 'Not provided'}</p>
+                        <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Materials</label>
+                        <p className="text-white font-medium text-sm">{selectedTeam.robotMaterials || 'Not provided'}</p>
                       </div>
                       <div>
-                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Materials</label>
-                        <p className="text-white font-medium">{selectedTeam.robotMaterials || 'Not provided'}</p>
+                        <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Power Source</label>
+                        <p className="text-white font-medium text-sm">{selectedTeam.robotPowerSource || 'Not provided'}</p>
                       </div>
                       <div>
-                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Power Source</label>
-                        <p className="text-white font-medium">{selectedTeam.robotPowerSource || 'Not provided'}</p>
+                        <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Weapons</label>
+                        <p className="text-white font-medium text-sm">{selectedTeam.robotWeapons || 'Not provided'}</p>
                       </div>
                       <div>
-                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Weapons</label>
-                        <p className="text-white font-medium">{selectedTeam.robotWeapons || 'Not provided'}</p>
+                        <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Additional Info</label>
+                        <p className="text-white font-medium text-xs">{selectedTeam.robotAdditionalInfo || 'None'}</p>
                       </div>
                       <div>
-                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Additional Info</label>
-                        <p className="text-white font-medium text-sm">{selectedTeam.robotAdditionalInfo || 'None'}</p>
-                      </div>
-                      <div>
-                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Robot Status</label>
+                        <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Robot Status</label>
                         <div className="flex items-center gap-2">
-                          <span className={`px-3 py-1 text-xs font-tech uppercase italic font-bold ${
+                          <span className={`px-3 py-1 text-[10px] font-tech uppercase italic font-bold ${
                             selectedTeam.robotStatus === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500' :
                             selectedTeam.robotStatus === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500' :
                             'bg-yellow-500/20 text-yellow-400 border border-yellow-500'
@@ -1112,31 +1194,31 @@ export default function Admin() {
                       <div className="flex gap-2 pt-2">
                         <button
                           onClick={() => handleRobotStatusChange(selectedTeam._id, 'approved')}
-                          className="flex-1 bg-green-500 text-black font-tech uppercase italic font-bold py-2 text-sm hover:bg-white transition-colors"
+                          className="flex-1 bg-green-500 text-black font-tech uppercase italic font-bold py-2 text-[10px] md:text-sm hover:bg-white transition-colors"
                         >
                           Approve Robot
                         </button>
                         <button
                           onClick={() => handleRobotStatusChange(selectedTeam._id, 'rejected')}
-                          className="flex-1 bg-red-500 text-black font-tech uppercase italic font-bold py-2 text-sm hover:bg-white transition-colors"
+                          className="flex-1 bg-red-500 text-black font-tech uppercase italic font-bold py-2 text-[10px] md:text-sm hover:bg-white transition-colors"
                         >
                           Reject Robot
                         </button>
                       </div>
                     </div>
                     <div>
-                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-2">Robot Image</label>
+                      <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-2">Robot Image</label>
                       {selectedTeam.robotImage ? (
                         <div className="border-2 border-[#333] p-2 bg-[#111]">
                           <img 
                             src={selectedTeam.robotImage} 
                             alt="Robot" 
-                            className="w-full h-48 object-contain"
+                            className="w-full h-32 md:h-48 object-contain"
                             referrerPolicy="no-referrer"
                           />
                         </div>
                       ) : (
-                        <div className="w-full h-48 border-2 border-dashed border-[#333] flex items-center justify-center text-white/20 font-tech uppercase italic">
+                        <div className="w-full h-32 md:h-48 border-2 border-dashed border-[#333] flex items-center justify-center text-white/20 font-tech uppercase italic text-xs">
                           No Image Uploaded
                         </div>
                       )}
@@ -1144,20 +1226,20 @@ export default function Admin() {
                   </div>
                 </div>
 
-                <div className="mt-12 pt-8 border-t border-[#333] flex flex-wrap gap-4 items-end">
-                  <div className="flex-1">
-                    <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Registration Date</label>
-                    <p className="text-sm text-white/60">{new Date(selectedTeam.createdAt).toLocaleString()}</p>
+                <div className="mt-8 md:mt-12 pt-6 md:pt-8 border-t border-[#333] flex flex-wrap gap-4 items-end">
+                  <div className="flex-1 min-w-[120px]">
+                    <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Registration Date</label>
+                    <p className="text-[10px] md:text-sm text-white/60">{new Date(selectedTeam.createdAt).toLocaleString()}</p>
                   </div>
-                  <div className="flex-1">
-                    <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Current Status</label>
-                    <p className={`text-sm font-bold uppercase italic ${selectedTeam.status === 'approved' ? 'text-green-500' : selectedTeam.status === 'rejected' ? 'text-red-500' : 'text-yellow-500'}`}>
+                  <div className="flex-1 min-w-[120px]">
+                    <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Current Status</label>
+                    <p className={`text-xs md:text-sm font-bold uppercase italic ${selectedTeam.status === 'approved' ? 'text-green-500' : selectedTeam.status === 'rejected' ? 'text-red-500' : 'text-yellow-500'}`}>
                       {selectedTeam.status} {selectedTeam.participated && '(Participated)'}
                     </p>
                   </div>
                   <button 
                     onClick={() => setSelectedTeam(null)}
-                    className="bg-[#333] text-white font-tech uppercase italic font-bold px-6 py-2 hover:bg-[#E427F5] hover:text-black transition-colors transform -skew-x-12"
+                    className="w-full md:w-auto bg-[#333] text-white font-tech uppercase italic font-bold px-6 py-2 hover:bg-[#E427F5] hover:text-black transition-colors transform -skew-x-12"
                   >
                     <span className="block transform skew-x-12">Close</span>
                   </button>
