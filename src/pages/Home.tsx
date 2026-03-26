@@ -26,6 +26,8 @@ export default function Home() {
   const [bannerText, setBannerText] = useState('COMING SOON');
   const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
   const [sponsorLogoSize, setSponsorLogoSize] = useState('20');
+  const [termsAndConditions, setTermsAndConditions] = useState('');
+  const [showTermsModal, setShowTermsModal] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
 
@@ -51,6 +53,9 @@ export default function Home() {
         }
         if (data.sponsorLogoSize) {
           setSponsorLogoSize(data.sponsorLogoSize);
+        }
+        if (data.termsAndConditions) {
+          setTermsAndConditions(data.termsAndConditions);
         }
       })
       .catch(console.error);
@@ -89,6 +94,11 @@ export default function Home() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setShowTermsModal(true);
+  };
+
+  const confirmRegistration = async () => {
+    setShowTermsModal(false);
     setRegStatus('submitting');
     setRegError('');
     try {
@@ -483,7 +493,7 @@ export default function Home() {
                       src={img.url} 
                       alt="Gallery Image"
                       loading="lazy"
-                      className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                      className="w-full h-full object-cover transition-all duration-500 hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
                   )}
@@ -504,7 +514,7 @@ export default function Home() {
                     src={`https://picsum.photos/seed/botbash${i}/800/600`} 
                     alt={`Bot Bash 2025 Memory ${i}`}
                     loading="lazy"
-                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                    className="w-full h-full object-cover transition-all duration-500 hover:scale-110"
                     referrerPolicy="no-referrer"
                   />
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
@@ -519,6 +529,35 @@ export default function Home() {
 
       {/* Lightbox */}
       <AnimatePresence>
+        {showTermsModal && (
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-[#0a0a0a] border-2 border-[#E427F5] p-8 max-w-2xl w-full max-h-[80vh] overflow-y-auto relative"
+            >
+              <h2 className="text-3xl font-tech font-bold text-[#E427F5] mb-6 italic uppercase transform -skew-x-12">Terms & Conditions</h2>
+              <div className="text-gray-300 space-y-4 mb-8 whitespace-pre-wrap font-sans leading-relaxed">
+                {termsAndConditions || "By registering for Bot Bash 2026, you agree to follow all event rules, safety protocols, and maintain sportsmanship throughout the competition."}
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setShowTermsModal(false)}
+                  className="flex-1 py-4 border-2 border-gray-600 text-gray-400 font-tech font-bold italic uppercase transform -skew-x-12 hover:bg-gray-800 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmRegistration}
+                  className="flex-1 py-4 bg-[#E427F5] text-white font-tech font-bold italic uppercase transform -skew-x-12 hover:bg-[#c21ecf] transition-colors shadow-[0_0_20px_rgba(228,39,245,0.4)]"
+                >
+                  Agree & Continue
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
         {selectedMedia && (
           <motion.div 
             initial={{ opacity: 0 }}

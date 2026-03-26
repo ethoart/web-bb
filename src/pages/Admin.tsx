@@ -27,6 +27,7 @@ export default function Admin() {
   const [bannerText, setBannerText] = useState('COMING SOON');
   const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
   const [sponsorLogoSize, setSponsorLogoSize] = useState('20');
+  const [termsAndConditions, setTermsAndConditions] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Mail State
@@ -56,6 +57,16 @@ export default function Admin() {
       fetchData();
     }
   }, [isAuthenticated]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isAuthenticated && activeTab === 'registrations') {
+      interval = setInterval(() => {
+        fetchRegistrations(false);
+      }, 5000); // Poll every 5 seconds for real-time updates
+    }
+    return () => clearInterval(interval);
+  }, [isAuthenticated, activeTab]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,12 +161,23 @@ export default function Admin() {
     }
   };
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchRegistrations = async (showLoading = false) => {
+    if (showLoading) setLoading(true);
     try {
       const regRes = await fetch('/api/admin/registrations');
       const regData = await regRes.json();
       setRegistrations(regData);
+    } catch (err) {
+      console.error('Error fetching registrations:', err);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      await fetchRegistrations(false);
 
       const setRes = await fetch('/api/settings');
       const setData = await setRes.json();
@@ -177,6 +199,9 @@ export default function Admin() {
       }
       if (setData.sponsorLogoSize) {
         setSponsorLogoSize(setData.sponsorLogoSize);
+      }
+      if (setData.termsAndConditions) {
+        setTermsAndConditions(setData.termsAndConditions);
       }
 
       const galRes = await fetch('/api/gallery');
@@ -319,6 +344,11 @@ export default function Admin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'sponsorLogoSize', value: sponsorLogoSize })
+      });
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'termsAndConditions', value: termsAndConditions })
       });
       localStorage.setItem('logoSize', logoSize);
       alert('Settings saved successfully!');
@@ -545,9 +575,18 @@ export default function Admin() {
                 <div>
                   <div className="flex justify-between items-center mb-8">
                     <h2 className="text-3xl font-tech font-bold uppercase italic tracking-wider text-[#E427F5]">Team Registrations</h2>
-                    <div className="bg-black px-4 py-2 border-2 border-[#333] font-tech italic uppercase">
-                      <span className="text-white/60 mr-2">Total Teams:</span>
-                      <span className="font-bold text-[#E427F5]">{registrations.length}</span>
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => fetchRegistrations(true)}
+                        className="bg-[#E427F5] text-white px-4 py-2 border-2 border-[#E427F5] font-tech italic uppercase flex items-center gap-2 hover:bg-[#c21ecf] hover:border-[#c21ecf] transition-colors shadow-[0_0_15px_rgba(228,39,245,0.4)]"
+                      >
+                        <RefreshCw className="w-5 h-5" />
+                        <span className="hidden sm:inline">Refresh</span>
+                      </button>
+                      <div className="bg-black px-4 py-2 border-2 border-[#333] font-tech italic uppercase">
+                        <span className="text-white/60 mr-2">Total Teams:</span>
+                        <span className="font-bold text-[#E427F5]">{registrations.length}</span>
+                      </div>
                     </div>
                   </div>
 
@@ -1175,6 +1214,19 @@ export default function Admin() {
                         <span className="font-tech text-2xl text-white w-12 text-center">{sponsorLogoSize}</span>
                       </div>
                       <p className="text-xs text-white/40 font-tech uppercase italic">Adjust the maximum height of sponsor logos on the home page (rem units equivalent).</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
+                        Terms & Conditions
+                      </label>
+                      <textarea 
+                        value={termsAndConditions}
+                        onChange={e => setTermsAndConditions(e.target.value)}
+                        className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-lg font-tech h-48 resize-none"
+                        placeholder="Enter terms and conditions for registration..."
+                      />
+                      <p className="text-xs text-white/40 font-tech uppercase italic">This text will be shown to users before they complete their registration.</p>
                     </div>
 
                     <div className="pt-6 border-t-2 border-[#333] flex items-center justify-between">

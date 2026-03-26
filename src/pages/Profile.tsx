@@ -42,6 +42,23 @@ export default function Profile() {
       })
       .catch(console.error);
 
+    // Check for saved user session
+    const savedUserId = localStorage.getItem('botbash_user_id');
+    if (savedUserId && !user) {
+      setLoading(true);
+      fetch(`/api/user/${savedUserId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            setUser(data.user);
+          } else {
+            localStorage.removeItem('botbash_user_id');
+          }
+        })
+        .catch(() => localStorage.removeItem('botbash_user_id'))
+        .finally(() => setLoading(false));
+    }
+
     if (user) {
       setRobotHeight(user.robotHeight || '');
       setRobotWeight(user.robotWeight || '');
@@ -80,6 +97,7 @@ export default function Profile() {
       const data = await res.json();
       if (res.ok) {
         setUser(data.user);
+        localStorage.setItem('botbash_user_id', data.user._id);
       } else {
         setError(data.error || 'Login failed');
       }
@@ -98,6 +116,7 @@ export default function Profile() {
     setResetCode('');
     setNewPassword('');
     setResetMessage('');
+    localStorage.removeItem('botbash_user_id');
   };
 
   const handleForgotPasswordRequest = async (e: React.FormEvent) => {

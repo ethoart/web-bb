@@ -8,6 +8,7 @@ import nodemailer from 'nodemailer';
 import QRCode from 'qrcode';
 import multer from 'multer';
 import fs from 'fs';
+import PDFDocument from 'pdfkit';
 
 dotenv.config();
 
@@ -134,6 +135,55 @@ const getEmailTemplate = (title: string, content: string) => `
       text-transform: uppercase;
       margin-top: 20px;
     }
+    .pass-card {
+      background: #000;
+      border: 2px solid #E427F5;
+      border-radius: 12px;
+      padding: 24px;
+      margin: 30px auto;
+      text-align: center;
+      max-width: 350px;
+      box-shadow: 0 0 20px rgba(228, 39, 245, 0.2);
+    }
+    .pass-card h3 {
+      color: #E427F5;
+      margin: 0 0 5px 0;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 24px;
+    }
+    .pass-card .subtitle {
+      color: #fff;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 0 0 20px 0;
+    }
+    .qr-container {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    .qr-container img {
+      display: block;
+      width: 200px;
+      height: 200px;
+    }
+    .pass-details {
+      text-align: left;
+      border-top: 1px dashed #333;
+      padding-top: 15px;
+      margin-top: 15px;
+    }
+    .pass-details p {
+      margin: 5px 0;
+      font-size: 14px;
+      color: #ccc;
+    }
+    .pass-details strong {
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -153,6 +203,36 @@ const getEmailTemplate = (title: string, content: string) => `
 </body>
 </html>
 `;
+
+const generateTermsPDF = (teamName: string, captainName: string, termsText: string): Promise<Buffer> => {
+  return new Promise((resolve, reject) => {
+    try {
+      const doc = new PDFDocument();
+      const buffers: Buffer[] = [];
+      doc.on('data', buffers.push.bind(buffers));
+      doc.on('end', () => {
+        resolve(Buffer.concat(buffers));
+      });
+
+      doc.fontSize(24).fillColor('#E427F5').text('BOT BASH 2026', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(18).fillColor('#000000').text('Terms and Conditions Agreement', { align: 'center' });
+      doc.moveDown();
+      doc.fontSize(12).text(`Team Name: ${teamName}`);
+      doc.text(`Captain Name: ${captainName}`);
+      doc.text(`Date Agreed: ${new Date().toLocaleDateString()}`);
+      doc.moveDown();
+      doc.moveDown();
+      doc.fontSize(10).text(termsText || 'Standard Bot Bash Terms and Conditions apply.', {
+        align: 'justify'
+      });
+
+      doc.end();
+    } catch (err) {
+      reject(err);
+    }
+  });
+};
 
 // Models
 const RegistrationSchema = new mongoose.Schema({
@@ -210,7 +290,8 @@ let mockSettings: any = {
   youtubeLink: '#',
   eventDate: 'To Be Announced (2026)',
   eventLocation: 'Royal MAS Arena, Colombo',
-  logoSize: '14'
+  logoSize: '14',
+  termsAndConditions: 'By registering for BOT BASH, you agree to follow all safety protocols and competition rules. Robots must be inspected before the match. The organizers are not responsible for any damage to your robot during the competition.'
 };
 
 // API Routes
@@ -419,6 +500,26 @@ app.post('/api/login', async (req, res) => {
       res.json({ success: true, user });
     } else {
       res.status(401).json({ error: 'Invalid email or password' });
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/api/user/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let user;
+    if (isDbConnected) {
+      user = await Registration.findById(id);
+    } else {
+      user = mockRegistrations.find(r => r._id === id);
+    }
+    
+    if (user) {
+      res.json({ success: true, user });
+    } else {
+      res.status(404).json({ error: 'User not found' });
     }
   } catch (err: any) {
     res.status(500).json({ error: err.message });
@@ -655,12 +756,47 @@ app.put('/api/admin/registrations/:id/status', async (req, res) => {
                            <p>Your application for team <strong>${user.teamName}</strong> has been <strong>${status}</strong>.</p>`;
 
         if (status === 'approved') {
-          htmlContent += `<p>Congratulations! Attached is your QR Code pass for the event. Please present this at the entrance.</p>`;
-          mailOptions.attachments = [{
-            filename: 'botbash-pass.png',
-            content: user.qrCode.split("base64,")[1],
-            encoding: 'base64'
-          }];
+          let termsText = mockSettings.termsAndConditions;
+          if (isDbConnected) {
+            const settings = await Settings.findOne();
+            if (settings && settings.termsAndConditions) {
+              termsText = settings.termsAndConditions;
+            }
+          }
+
+          const pdfBuffer = await generateTermsPDF(user.teamName, user.captainName, termsText);
+
+          htmlContent += `
+            <div class="pass-card">
+              <h3>Bot Bash</h3>
+              <p class="subtitle">2026 Event Pass</p>
+              
+              <div class="qr-container">
+                <img src="cid:qrcode" alt="QR Code" />
+              </div>
+              
+              <div class="pass-details">
+                <p>Team: <strong>${user.teamName}</strong></p>
+                <p>Captain: <strong>${user.captainName}</strong></p>
+                <p>Robot: <strong>${user.robotName}</strong></p>
+              </div>
+            </div>
+            <p>Congratulations! Attached is your QR Code pass for the event and the Terms and Conditions PDF you agreed to. Please present this pass at the entrance.</p>
+          `;
+          
+          mailOptions.attachments = [
+            {
+              filename: 'botbash-pass.png',
+              content: user.qrCode.split("base64,")[1],
+              encoding: 'base64',
+              cid: 'qrcode'
+            },
+            {
+              filename: 'BotBash_Terms_And_Conditions.pdf',
+              content: pdfBuffer,
+              contentType: 'application/pdf'
+            }
+          ];
         } else if (status === 'rejected') {
           htmlContent += `<p>Unfortunately, your application was not approved at this time. Thank you for your interest in Bot Bash.</p>`;
         }
