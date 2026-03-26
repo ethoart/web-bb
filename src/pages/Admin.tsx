@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine } from 'lucide-react';
+import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link, Upload, Trash2 } from 'lucide-react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 export default function Admin() {
@@ -10,7 +10,7 @@ export default function Admin() {
 
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'registrations' | 'scanner' | 'mail' | 'settings'>('registrations');
+  const [activeTab, setActiveTab] = useState<'registrations' | 'scanner' | 'mail' | 'settings' | 'gallery'>('registrations');
 
   // Settings State
   const [prizePoolFirst, setPrizePoolFirst] = useState('');
@@ -31,6 +31,12 @@ export default function Admin() {
   // Scanner State
   const [scanResult, setScanResult] = useState<string | null>(null);
   const [scanStatus, setScanStatus] = useState<'idle' | 'success' | 'error'>('idle');
+
+  // Gallery State
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
+  const [galleryLink, setGalleryLink] = useState('');
+  const [galleryFile, setGalleryFile] = useState<File | null>(null);
+  const [uploadingGallery, setUploadingGallery] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -113,6 +119,10 @@ export default function Admin() {
       if (setData.facebookLink) setFacebookLink(setData.facebookLink);
       if (setData.instagramLink) setInstagramLink(setData.instagramLink);
       if (setData.youtubeLink) setYoutubeLink(setData.youtubeLink);
+
+      const galRes = await fetch('/api/gallery');
+      const galData = await galRes.json();
+      setGalleryImages(galData);
     } catch (err) {
       console.error('Error fetching admin data:', err);
     } finally {
@@ -201,6 +211,59 @@ export default function Admin() {
       alert('Failed to save settings.');
     } finally {
       setSavingSettings(false);
+    }
+  };
+
+  const handleAddGalleryLink = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!galleryLink) return;
+    setUploadingGallery(true);
+    try {
+      const res = await fetch('/api/admin/gallery/link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: galleryLink })
+      });
+      if (res.ok) {
+        setGalleryLink('');
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Error adding gallery link:', err);
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
+
+  const handleUploadGalleryFile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!galleryFile) return;
+    setUploadingGallery(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', galleryFile);
+      const res = await fetch('/api/admin/gallery/upload', {
+        method: 'POST',
+        body: formData
+      });
+      if (res.ok) {
+        setGalleryFile(null);
+        fetchData();
+      }
+    } catch (err) {
+      console.error('Error uploading gallery file:', err);
+    } finally {
+      setUploadingGallery(false);
+    }
+  };
+
+  const handleDeleteGalleryImage = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this image?')) return;
+    try {
+      await fetch(`/api/admin/gallery/${id}`, { method: 'DELETE' });
+      fetchData();
+    } catch (err) {
+      console.error('Error deleting gallery image:', err);
     }
   };
 
@@ -319,6 +382,13 @@ export default function Admin() {
               <span className="tracking-wide">Mail Portal</span>
             </button>
             <button 
+              onClick={() => setActiveTab('gallery')}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-none transition-colors ${activeTab === 'gallery' ? 'bg-[#E427F5] text-black font-bold' : 'text-white/60 hover:text-[#E427F5]'}`}
+            >
+              <Image className="w-5 h-5" />
+              <span className="tracking-wide">Gallery</span>
+            </button>
+            <button 
               onClick={() => setActiveTab('settings')}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-none transition-colors ${activeTab === 'settings' ? 'bg-[#E427F5] text-black font-bold' : 'text-white/60 hover:text-[#E427F5]'}`}
             >
@@ -333,6 +403,7 @@ export default function Admin() {
           <button onClick={() => setActiveTab('registrations')} className={`p-2 ${activeTab === 'registrations' ? 'text-[#E427F5]' : 'text-white/60'}`}><Users /></button>
           <button onClick={() => setActiveTab('scanner')} className={`p-2 ${activeTab === 'scanner' ? 'text-[#E427F5]' : 'text-white/60'}`}><QrCode /></button>
           <button onClick={() => setActiveTab('mail')} className={`p-2 ${activeTab === 'mail' ? 'text-[#E427F5]' : 'text-white/60'}`}><Mail /></button>
+          <button onClick={() => setActiveTab('gallery')} className={`p-2 ${activeTab === 'gallery' ? 'text-[#E427F5]' : 'text-white/60'}`}><Image /></button>
           <button onClick={() => setActiveTab('settings')} className={`p-2 ${activeTab === 'settings' ? 'text-[#E427F5]' : 'text-white/60'}`}><Settings /></button>
         </div>
 
@@ -492,6 +563,98 @@ export default function Admin() {
                       </button>
                     </form>
                   </div>
+                </div>
+              )}
+
+              {activeTab === 'gallery' && (
+                <div className="max-w-4xl">
+                  <h2 className="text-3xl font-tech font-bold uppercase italic tracking-wider mb-8 flex items-center gap-3 text-[#E427F5]">
+                    <Image className="w-8 h-8" /> Gallery Management
+                  </h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+                    {/* Upload File */}
+                    <div className="bg-black p-8 border-2 border-[#333]">
+                      <h3 className="font-tech text-xl uppercase italic font-bold text-white mb-6 flex items-center gap-2">
+                        <Upload className="w-5 h-5 text-[#E427F5]" /> Upload Image
+                      </h3>
+                      <form onSubmit={handleUploadGalleryFile} className="space-y-4">
+                        <input 
+                          type="file" 
+                          accept="image/*"
+                          onChange={e => setGalleryFile(e.target.files?.[0] || null)}
+                          className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium file:mr-4 file:py-2 file:px-4 file:border-0 file:text-sm file:font-tech file:italic file:uppercase file:bg-[#E427F5] file:text-black hover:file:bg-white file:transition-colors"
+                        />
+                        <button 
+                          type="submit"
+                          disabled={!galleryFile || uploadingGallery}
+                          className="w-full bg-[#E427F5] text-black font-tech text-xl uppercase italic font-black py-3 hover:bg-white transition-colors transform -skew-x-12 disabled:opacity-50"
+                        >
+                          <span className="block transform skew-x-12">
+                            {uploadingGallery ? 'UPLOADING...' : 'UPLOAD FILE'}
+                          </span>
+                        </button>
+                      </form>
+                    </div>
+
+                    {/* Add Link */}
+                    <div className="bg-black p-8 border-2 border-[#333]">
+                      <h3 className="font-tech text-xl uppercase italic font-bold text-white mb-6 flex items-center gap-2">
+                        <Link className="w-5 h-5 text-[#E427F5]" /> Add Image Link
+                      </h3>
+                      <form onSubmit={handleAddGalleryLink} className="space-y-4">
+                        <input 
+                          type="url" 
+                          placeholder="https://example.com/image.jpg"
+                          value={galleryLink}
+                          onChange={e => setGalleryLink(e.target.value)}
+                          className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                        />
+                        <button 
+                          type="submit"
+                          disabled={!galleryLink || uploadingGallery}
+                          className="w-full bg-[#E427F5] text-black font-tech text-xl uppercase italic font-black py-3 hover:bg-white transition-colors transform -skew-x-12 disabled:opacity-50"
+                        >
+                          <span className="block transform skew-x-12">
+                            {uploadingGallery ? 'ADDING...' : 'ADD LINK'}
+                          </span>
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+
+                  {/* Gallery Grid */}
+                  <h3 className="font-tech text-2xl uppercase italic font-bold text-white mb-6">Current Images</h3>
+                  {galleryImages.length === 0 ? (
+                    <div className="bg-black border-2 border-[#333] p-8 text-center text-white/40 font-tech italic uppercase">
+                      No images in gallery yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {galleryImages.map((img) => (
+                        <div key={img._id} className="relative group aspect-square bg-black border-2 border-[#333] overflow-hidden">
+                          <img 
+                            src={img.url} 
+                            alt="Gallery" 
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button 
+                              onClick={() => handleDeleteGalleryImage(img._id)}
+                              className="bg-red-500 text-white p-3 rounded-full hover:bg-red-600 transition-colors transform hover:scale-110"
+                              title="Delete Image"
+                            >
+                              <Trash2 className="w-6 h-6" />
+                            </button>
+                          </div>
+                          <div className="absolute bottom-0 left-0 w-full bg-black/80 p-2 text-xs font-tech uppercase italic text-[#E427F5] truncate">
+                            {img.type}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

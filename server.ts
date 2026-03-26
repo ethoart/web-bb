@@ -6,12 +6,34 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import nodemailer from 'nodemailer';
 import QRCode from 'qrcode';
+import multer from 'multer';
+import fs from 'fs';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Ensure uploads directory exists
+const uploadDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// Multer config
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  }
+});
+const upload = multer({ storage: storage });
+
+app.use('/uploads', express.static(uploadDir));
 
 // MongoDB Connection
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -154,8 +176,16 @@ const SettingsSchema = new mongoose.Schema({
 });
 const Settings = mongoose.model('Settings', SettingsSchema);
 
+const GalleryImageSchema = new mongoose.Schema({
+  url: { type: String, required: true },
+  type: { type: String, enum: ['upload', 'link'], required: true },
+  createdAt: { type: Date, default: Date.now }
+});
+const GalleryImage = mongoose.model('GalleryImage', GalleryImageSchema);
+
 // In-memory mock data
 const mockRegistrations: any[] = [];
+let mockGalleryImages: any[] = [];
 let mockSettings: any = {
   prizePoolFirst: '$500,000',
   isRevealed: false,
@@ -166,6 +196,89 @@ let mockSettings: any = {
 };
 
 // API Routes
+app.get('/api/gallery', async (req, res) => {
+  try {
+    if (isDbConnected) {
+      const images = await GalleryImage.find().sort({ createdAt: -1 });
+      res.json(images);
+    } else {
+      res.json(mockGalleryImages.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/gallery/upload', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    
+    const url = `/uploads/${req.file.filename}`;
+    let newImage;
+    if (isDbConnected) {
+      newImage = new GalleryImage({ url, type: 'upload' });
+      await newImage.save();
+    } else {
+      newImage = { _id: Date.now().toString(), url, type: 'upload', createdAt: new Date() };
+      mockGalleryImages.push(newImage);
+    }
+    res.json({ success: true, image: newImage });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/gallery/link', async (req, res) => {
+  try {
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL is required' });
+    
+    let newImage;
+    if (isDbConnected) {
+      newImage = new GalleryImage({ url, type: 'link' });
+      await newImage.save();
+    } else {
+      newImage = { _id: Date.now().toString(), url, type: 'link', createdAt: new Date() };
+      mockGalleryImages.push(newImage);
+    }
+    res.json({ success: true, image: newImage });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/admin/gallery/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    let image;
+    
+    if (isDbConnected) {
+      image = await GalleryImage.findById(id);
+      if (!image) return res.status(404).json({ error: 'Image not found' });
+      
+      if (image.type === 'upload') {
+        const filePath = path.join(process.cwd(), image.url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+      await GalleryImage.findByIdAndDelete(id);
+    } else {
+      const index = mockGalleryImages.findIndex(img => img._id === id);
+      if (index === -1) return res.status(404).json({ error: 'Image not found' });
+      
+      image = mockGalleryImages[index];
+      if (image.type === 'upload') {
+        const filePath = path.join(process.cwd(), image.url);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+      mockGalleryImages.splice(index, 1);
+    }
+    
+    res.json({ success: true, message: 'Image deleted' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/register', async (req, res) => {
   try {
     let newReg;

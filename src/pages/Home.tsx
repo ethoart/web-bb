@@ -16,6 +16,7 @@ export default function Home() {
   const [facebookLink, setFacebookLink] = useState('https://www.facebook.com/profile.php?id=61573020699132');
   const [instagramLink, setInstagramLink] = useState('#');
   const [youtubeLink, setYoutubeLink] = useState('#');
+  const [galleryImages, setGalleryImages] = useState<any[]>([]);
 
   useEffect(() => {
     fetch('/api/settings')
@@ -29,6 +30,11 @@ export default function Home() {
         if (data.instagramLink) setInstagramLink(data.instagramLink);
         if (data.youtubeLink) setYoutubeLink(data.youtubeLink);
       })
+      .catch(console.error);
+
+    fetch('/api/gallery')
+      .then(res => res.json())
+      .then(data => setGalleryImages(data))
       .catch(console.error);
   }, []);
 
@@ -340,23 +346,43 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {/* Placeholder images for gallery */}
-            {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div 
-                key={i}
-                className="aspect-video bg-[#111] border-2 border-[#333] overflow-hidden relative group hover:border-[#E427F5] transition-colors"
-              >
-                <img 
-                  src={`https://picsum.photos/seed/botbash${i}/800/600`} 
-                  alt={`Bot Bash 2025 Memory ${i}`}
-                  className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
-                  referrerPolicy="no-referrer"
-                />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-                  <p className="text-[#E427F5] font-tech text-3xl font-bold italic uppercase transform -skew-x-12">VIEW IMAGE</p>
+            {galleryImages.length > 0 ? (
+              galleryImages.map((img) => (
+                <div 
+                  key={img._id}
+                  className="aspect-video bg-[#111] border-2 border-[#333] overflow-hidden relative group hover:border-[#E427F5] transition-colors"
+                >
+                  <img 
+                    src={img.url} 
+                    alt="Gallery Image"
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <a href={img.url} target="_blank" rel="noreferrer" className="text-[#E427F5] font-tech text-3xl font-bold italic uppercase transform -skew-x-12 hover:text-white transition-colors">
+                      VIEW IMAGE
+                    </a>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              [1, 2, 3, 4, 5, 6].map((i) => (
+                <div 
+                  key={i}
+                  className="aspect-video bg-[#111] border-2 border-[#333] overflow-hidden relative group hover:border-[#E427F5] transition-colors"
+                >
+                  <img 
+                    src={`https://picsum.photos/seed/botbash${i}/800/600`} 
+                    alt={`Bot Bash 2025 Memory ${i}`}
+                    className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                    referrerPolicy="no-referrer"
+                  />
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                    <p className="text-[#E427F5] font-tech text-3xl font-bold italic uppercase transform -skew-x-12">VIEW IMAGE</p>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
