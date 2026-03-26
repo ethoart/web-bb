@@ -162,6 +162,7 @@ const RegistrationSchema = new mongoose.Schema({
   captainName: String,
   email: String,
   phone: String,
+  memberCount: { type: Number, default: 1 },
   password: { type: String, required: true },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   participated: { type: Boolean, default: false },
@@ -196,6 +197,16 @@ let mockSettings: any = {
 };
 
 // API Routes
+app.post('/api/admin/upload', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ success: true, url });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/gallery', async (req, res) => {
   try {
     if (isDbConnected) {
@@ -279,6 +290,21 @@ app.delete('/api/admin/gallery/:id', async (req, res) => {
   }
 });
 
+app.delete('/api/admin/registrations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (isDbConnected) {
+      await Registration.findByIdAndDelete(id);
+    } else {
+      const index = mockRegistrations.findIndex(r => r._id === id);
+      if (index !== -1) mockRegistrations.splice(index, 1);
+    }
+    res.json({ success: true, message: 'Registration deleted' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/api/register', async (req, res) => {
   try {
     let newReg;
@@ -292,15 +318,17 @@ app.post('/api/register', async (req, res) => {
 
     // Send Admin Notification
     if (process.env.SMTP_USER || process.env.GMAIL_USER) {
+      const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER;
+      
       try {
         const adminEmail = process.env.ADMIN_EMAIL || process.env.SMTP_USER || process.env.GMAIL_USER;
-        const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER;
         
-        const htmlContent = `
+        const adminHtml = `
           <p>A new team has registered for Bot Bash!</p>
           <ul>
             <li><strong>Team Name:</strong> ${req.body.teamName}</li>
             <li><strong>Robot Name:</strong> ${req.body.robotName}</li>
+            <li><strong>Member Count:</strong> ${req.body.memberCount || 1}</li>
             <li><strong>Country:</strong> ${req.body.country}</li>
             <li><strong>Captain:</strong> ${req.body.captainName}</li>
             <li><strong>Email:</strong> ${req.body.email}</li>
@@ -310,12 +338,31 @@ app.post('/api/register', async (req, res) => {
 
         await transporter.sendMail({
           from: `"Bot Bash" <${fromEmail}>`,
-          to: adminEmail, // Admin email
+          to: adminEmail,
           subject: `New Bot Bash Registration: ${req.body.teamName}`,
-          html: getEmailTemplate(`New Registration`, htmlContent)
+          html: getEmailTemplate(`New Registration`, adminHtml)
         });
       } catch (e) {
         console.error('Failed to send admin notification email', e);
+      }
+
+      // Send User Confirmation
+      try {
+        const userHtml = `
+          <p>Hello <strong>${req.body.captainName}</strong>,</p>
+          <p>Thank you for registering your team <strong>${req.body.teamName}</strong> for Bot Bash 2026!</p>
+          <p>Our team will review your application shortly. You will receive another email once your status has been updated.</p>
+          <p>Best regards,<br>The Bot Bash Team</p>
+        `;
+
+        await transporter.sendMail({
+          from: `"Bot Bash" <${fromEmail}>`,
+          to: req.body.email,
+          subject: `Registration Received: ${req.body.teamName}`,
+          html: getEmailTemplate(`Registration Received`, userHtml)
+        });
+      } catch (e) {
+        console.error('Failed to send user confirmation email', e);
       }
     }
 
@@ -440,6 +487,28 @@ app.post('/api/admin/scan', async (req, res) => {
 
     if (isDbConnected) {
       await user.save();
+    }
+
+    // Send Thank You Email
+    if (process.env.SMTP_USER || process.env.GMAIL_USER) {
+      try {
+        const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER;
+        const thankYouHtml = `
+          <p>Hello <strong>${user.captainName}</strong>,</p>
+          <p>Thank you for attending Bot Bash 2026 with your team <strong>${user.teamName}</strong>!</p>
+          <p>We hope you had an amazing experience. Stay tuned for results and future events!</p>
+          <p>Best regards,<br>The Bot Bash Team</p>
+        `;
+
+        await transporter.sendMail({
+          from: `"Bot Bash" <${fromEmail}>`,
+          to: user.email,
+          subject: `Thank You for Attending Bot Bash 2026!`,
+          html: getEmailTemplate(`Thank You for Attending`, thankYouHtml)
+        });
+      } catch (e) {
+        console.error('Failed to send thank you email', e);
+      }
     }
 
     res.json({ success: true, user });

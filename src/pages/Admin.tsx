@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link, Upload, Trash2 } from 'lucide-react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link, Upload, Trash2, Camera, Info } from 'lucide-react';
+import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,7 +30,12 @@ export default function Admin() {
 
   // Scanner State
   const [scanResult, setScanResult] = useState<string | null>(null);
+  const [scannedUser, setScannedUser] = useState<any>(null);
   const [scanStatus, setScanStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [isScannerStarted, setIsScannerStarted] = useState(false);
+
+  // Modal State
+  const [selectedTeam, setSelectedTeam] = useState<any>(null);
 
   // Gallery State
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
@@ -55,24 +60,37 @@ export default function Admin() {
   };
 
   useEffect(() => {
-    if (activeTab === 'scanner') {
-      const scanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-      );
-      scanner.render(onScanSuccess, onScanFailure);
+    let html5QrCode: Html5Qrcode | null = null;
+
+    if (activeTab === 'scanner' && isScannerStarted) {
+      html5QrCode = new Html5Qrcode("reader");
+      
+      const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+      
+      html5QrCode.start(
+        { facingMode: "environment" }, 
+        config, 
+        onScanSuccess, 
+        onScanFailure
+      ).catch(err => {
+        console.error("Unable to start scanning", err);
+        setIsScannerStarted(false);
+        alert("Could not start camera. Please ensure you have granted camera permissions.");
+      });
 
       return () => {
-        scanner.clear().catch(error => {
-          console.error("Failed to clear html5QrcodeScanner. ", error);
-        });
+        if (html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop().then(() => {
+            html5QrCode?.clear();
+          }).catch(err => console.error("Failed to stop scanner", err));
+        }
       };
     }
-  }, [activeTab]);
+  }, [activeTab, isScannerStarted]);
 
   const onScanSuccess = async (decodedText: string) => {
     setScanResult(decodedText);
+    setScannedUser(null);
     try {
       // The QR code contains JSON data like {"id":"...","team":"..."}
       let parsedData;
@@ -88,8 +106,10 @@ export default function Admin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: parsedData.id })
       });
+      const data = await res.json();
       if (res.ok) {
         setScanStatus('success');
+        setScannedUser(data.user);
         fetchData(); // Refresh data to show participated status
       } else {
         setScanStatus('error');
@@ -101,6 +121,25 @@ export default function Admin() {
 
   const onScanFailure = (error: any) => {
     // handle scan failure, usually better to ignore and keep scanning
+  };
+
+  const handleFileUpload = async (file: File, type: 'banner' | 'sponsors') => {
+    const formData = new FormData();
+    formData.append('image', file);
+    try {
+      const res = await fetch('/api/admin/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.url) {
+        if (type === 'banner') setBannerImage(data.url);
+        else setSponsors(data.url);
+      }
+    } catch (err) {
+      console.error('Error uploading file:', err);
+      alert('Failed to upload image');
+    }
   };
 
   const fetchData = async () => {
@@ -140,6 +179,18 @@ export default function Admin() {
       fetchData();
     } catch (err) {
       console.error('Error updating status:', err);
+    }
+  };
+
+  const handleDeleteRegistration = async (id: string) => {
+    if (!window.confirm('Are you sure you want to delete this registration?')) return;
+    try {
+      await fetch(`/api/admin/registrations/${id}`, {
+        method: 'DELETE'
+      });
+      fetchData();
+    } catch (err) {
+      console.error('Error deleting registration:', err);
     }
   };
 
@@ -449,7 +500,14 @@ export default function Admin() {
                         ) : (
                           registrations.map((reg, i) => (
                             <tr key={i} className="border-b border-[#333] hover:bg-[#111] transition-colors">
-                              <td className="p-4 font-bold text-white">{reg.teamName}</td>
+                              <td className="p-4">
+                                <button 
+                                  onClick={() => setSelectedTeam(reg)}
+                                  className="font-bold text-[#E427F5] hover:text-white transition-colors text-left"
+                                >
+                                  {reg.teamName}
+                                </button>
+                              </td>
                               <td className="p-4 font-semibold text-white/80">{reg.robotName}</td>
                               <td className="p-4 text-sm text-white/80">{reg.country || 'N/A'}</td>
                               <td className="p-4 text-sm text-white/60">
@@ -463,24 +521,33 @@ export default function Admin() {
                                 {reg.participated && <div className="text-xs text-[#E427F5] mt-1">PARTICIPATED</div>}
                               </td>
                               <td className="p-4">
-                                {reg.status === 'pending' && (
-                                  <div className="flex gap-2">
-                                    <button 
-                                      onClick={() => handleStatusChange(reg._id, 'approved')}
-                                      className="p-2 bg-green-500/20 text-green-400 border border-green-500 hover:bg-green-500 hover:text-black transition-colors"
-                                      title="Approve"
-                                    >
-                                      <CheckCircle2 className="w-5 h-5" />
-                                    </button>
-                                    <button 
-                                      onClick={() => handleStatusChange(reg._id, 'rejected')}
-                                      className="p-2 bg-red-500/20 text-red-400 border border-red-500 hover:bg-red-500 hover:text-black transition-colors"
-                                      title="Reject"
-                                    >
-                                      <XCircle className="w-5 h-5" />
-                                    </button>
-                                  </div>
-                                )}
+                                <div className="flex gap-2">
+                                  {reg.status === 'pending' && (
+                                    <>
+                                      <button 
+                                        onClick={() => handleStatusChange(reg._id, 'approved')}
+                                        className="p-2 bg-green-500/20 text-green-400 border border-green-500 hover:bg-green-500 hover:text-black transition-colors"
+                                        title="Approve"
+                                      >
+                                        <CheckCircle2 className="w-5 h-5" />
+                                      </button>
+                                      <button 
+                                        onClick={() => handleStatusChange(reg._id, 'rejected')}
+                                        className="p-2 bg-red-500/20 text-red-400 border border-red-500 hover:bg-red-500 hover:text-black transition-colors"
+                                        title="Reject"
+                                      >
+                                        <XCircle className="w-5 h-5" />
+                                      </button>
+                                    </>
+                                  )}
+                                  <button 
+                                    onClick={() => handleDeleteRegistration(reg._id)}
+                                    className="p-2 bg-red-900/20 text-red-500 border border-red-900 hover:bg-red-600 hover:text-white transition-colors"
+                                    title="Delete Registration"
+                                  >
+                                    <Trash2 className="w-5 h-5" />
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))
@@ -492,18 +559,55 @@ export default function Admin() {
               )}
 
               {activeTab === 'scanner' && (
-                <div className="max-w-2xl">
+                <div className="max-w-2xl mx-auto">
                   <h2 className="text-3xl font-tech font-bold uppercase italic tracking-wider mb-8 flex items-center gap-3 text-[#E427F5]">
-                    <ScanLine className="w-8 h-8" /> Event Check-In
+                    <QrCode className="w-8 h-8" /> QR Check-In
                   </h2>
                   <div className="bg-black p-8 border-2 border-[#333]">
-                    <div id="reader" className="w-full bg-[#111] border-2 border-[#333] overflow-hidden mb-6"></div>
+                    <div className="mb-6 text-center">
+                      <p className="text-white/60 font-tech uppercase italic mb-4">Scan participant QR code to confirm attendance</p>
+                      {!isScannerStarted ? (
+                        <button 
+                          onClick={() => setIsScannerStarted(true)}
+                          className="bg-[#E427F5] text-black font-tech text-xl uppercase italic font-black py-3 px-8 hover:bg-white transition-colors transform -skew-x-12"
+                        >
+                          <span className="block transform skew-x-12 flex items-center gap-2">
+                            <Camera className="w-5 h-5" /> Start Camera
+                          </span>
+                        </button>
+                      ) : (
+                        <button 
+                          onClick={() => setIsScannerStarted(false)}
+                          className="bg-red-500 text-white font-tech text-xl uppercase italic font-black py-3 px-8 hover:bg-white hover:text-black transition-colors transform -skew-x-12"
+                        >
+                          <span className="block transform skew-x-12 flex items-center gap-2">
+                            <XCircle className="w-5 h-5" /> Stop Camera
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                    
+                    <div id="reader" className="w-full bg-[#111] border-2 border-[#333] overflow-hidden mb-6 min-h-[300px]"></div>
                     
                     {scanResult && (
                       <div className={`p-4 border-2 font-tech uppercase italic ${scanStatus === 'success' ? 'bg-green-500/20 border-green-500 text-green-400' : scanStatus === 'error' ? 'bg-red-500/20 border-red-500 text-red-400' : 'bg-[#111] border-[#333]'}`}>
                         <h3 className="font-bold mb-1">Scan Result:</h3>
                         <p className="font-sans normal-case text-sm break-all text-white">{scanResult}</p>
-                        {scanStatus === 'success' && <p className="mt-2 font-bold tracking-widest">✓ Participant Checked In!</p>}
+                        {scanStatus === 'success' && scannedUser && (
+                          <div className="mt-4 border-t border-green-500/30 pt-4">
+                            <p className="font-bold tracking-widest text-xl">✓ Participant Checked In!</p>
+                            <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="text-white/40">Team:</span>
+                                <div className="text-white">{scannedUser.teamName}</div>
+                              </div>
+                              <div>
+                                <span className="text-white/40">Members:</span>
+                                <div className="text-white text-xl font-black">{scannedUser.memberCount || 1}</div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                         {scanStatus === 'error' && <p className="mt-2 font-bold tracking-widest">✗ Invalid QR or Not Approved</p>}
                       </div>
                     )}
@@ -678,15 +782,28 @@ export default function Admin() {
 
                     <div className="space-y-4">
                       <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
-                        Banner Character Image URL
+                        Banner Character Image
                       </label>
-                      <input 
-                        type="text" 
-                        value={bannerImage}
-                        onChange={e => setBannerImage(e.target.value)}
-                        className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-xl font-tech"
-                        placeholder="e.g. https://example.com/image.png"
-                      />
+                      <div className="flex flex-col gap-4">
+                        <input 
+                          type="text" 
+                          value={bannerImage}
+                          onChange={e => setBannerImage(e.target.value)}
+                          className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-xl font-tech"
+                          placeholder="URL: https://example.com/image.png"
+                        />
+                        <div className="flex items-center gap-4">
+                          <label className="flex-1 bg-[#111] border-2 border-[#333] px-4 py-3 text-white/60 cursor-pointer hover:border-[#E427F5] transition-colors font-tech uppercase italic text-sm flex items-center gap-2">
+                            <Upload className="w-4 h-4" /> Upload New Image
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              className="hidden"
+                              onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'banner')}
+                            />
+                          </label>
+                        </div>
+                      </div>
                       {bannerImage && (
                         <div className="mt-4">
                           <p className="text-sm text-white/50 mb-2 font-tech uppercase italic">Preview:</p>
@@ -697,15 +814,28 @@ export default function Admin() {
 
                     <div className="space-y-4">
                       <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
-                        Sponsors Logo Image URL
+                        Sponsors Logo Image
                       </label>
-                      <input 
-                        type="text" 
-                        value={sponsors}
-                        onChange={e => setSponsors(e.target.value)}
-                        className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-xl font-tech"
-                        placeholder="e.g. https://example.com/sponsors.png"
-                      />
+                      <div className="flex flex-col gap-4">
+                        <input 
+                          type="text" 
+                          value={sponsors}
+                          onChange={e => setSponsors(e.target.value)}
+                          className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-xl font-tech"
+                          placeholder="URL: https://example.com/sponsors.png"
+                        />
+                        <div className="flex items-center gap-4">
+                          <label className="flex-1 bg-[#111] border-2 border-[#333] px-4 py-3 text-white/60 cursor-pointer hover:border-[#E427F5] transition-colors font-tech uppercase italic text-sm flex items-center gap-2">
+                            <Upload className="w-4 h-4" /> Upload New Logo
+                            <input 
+                              type="file" 
+                              accept="image/*"
+                              className="hidden"
+                              onChange={e => e.target.files?.[0] && handleFileUpload(e.target.files[0], 'sponsors')}
+                            />
+                          </label>
+                        </div>
+                      </div>
                       {sponsors && (
                         <div className="mt-4">
                           <p className="text-sm text-white/50 mb-2 font-tech uppercase italic">Preview:</p>
@@ -783,8 +913,85 @@ export default function Admin() {
               )}
             </motion.div>
           )}
-        </main>
-      </div>
+
+        {/* Team Details Modal */}
+        {selectedTeam && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-[#0A0A0A] border-4 border-[#E427F5] w-full max-w-2xl overflow-hidden relative"
+            >
+              <button 
+                onClick={() => setSelectedTeam(null)}
+                className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+              >
+                <XCircle className="w-8 h-8" />
+              </button>
+              
+              <div className="p-8">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="bg-[#E427F5] text-black p-3">
+                    <Users className="w-8 h-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-tech font-bold uppercase italic tracking-tighter text-white leading-none">
+                      {selectedTeam.teamName}
+                    </h3>
+                    <p className="text-[#E427F5] font-tech uppercase italic tracking-widest text-sm mt-1">Team Details</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Robot Name</label>
+                      <p className="text-xl font-bold text-white">{selectedTeam.robotName}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Country</label>
+                      <p className="text-xl font-bold text-white">{selectedTeam.country || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Team Members</label>
+                      <p className="text-3xl font-black text-[#E427F5]">{selectedTeam.memberCount || 1}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div>
+                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Captain Name</label>
+                      <p className="text-xl font-bold text-white">{selectedTeam.captainName}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Email Address</label>
+                      <p className="text-lg font-medium text-white break-all">{selectedTeam.email}</p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Phone Number</label>
+                      <p className="text-xl font-bold text-white">{selectedTeam.phone}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-12 pt-8 border-t border-[#333] flex flex-wrap gap-4">
+                  <div className="flex-1">
+                    <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Registration Date</label>
+                    <p className="text-sm text-white/60">{new Date(selectedTeam.createdAt).toLocaleString()}</p>
+                  </div>
+                  <div className="flex-1">
+                    <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Current Status</label>
+                    <p className={`text-sm font-bold uppercase italic ${selectedTeam.status === 'approved' ? 'text-green-500' : selectedTeam.status === 'rejected' ? 'text-red-500' : 'text-yellow-500'}`}>
+                      {selectedTeam.status} {selectedTeam.participated && '(Participated)'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </main>
     </div>
-  );
+  </div>
+);
 }

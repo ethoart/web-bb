@@ -40,7 +40,7 @@ export default function Home() {
 
   // Registration State
   const [regForm, setRegForm] = useState({
-    teamName: '', robotName: '', country: 'Sri Lanka', captainName: '', email: '', phone: '', password: ''
+    teamName: '', robotName: '', country: 'Sri Lanka', captainName: '', email: '', phone: '', memberCount: '1', password: ''
   });
   const [regStatus, setRegStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
 
@@ -55,7 +55,7 @@ export default function Home() {
       });
       if (res.ok) {
         setRegStatus('success');
-        setRegForm({ teamName: '', robotName: '', country: 'Sri Lanka', captainName: '', email: '', phone: '', password: '' });
+        setRegForm({ teamName: '', robotName: '', country: 'Sri Lanka', captainName: '', email: '', phone: '', memberCount: '1', password: '' });
       } else {
         setRegStatus('error');
       }
@@ -262,16 +262,31 @@ export default function Home() {
                       />
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Email Address</label>
-                    <input 
-                      required
-                      type="email" 
-                      value={regForm.email}
-                      onChange={e => setRegForm({...regForm, email: e.target.value})}
-                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
-                      placeholder="john@example.com"
-                    />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1">
+                      <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Email Address</label>
+                      <input 
+                        required
+                        type="email" 
+                        value={regForm.email}
+                        onChange={e => setRegForm({...regForm, email: e.target.value})}
+                        className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                        placeholder="john@example.com"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Team Members Count</label>
+                      <input 
+                        required
+                        type="number" 
+                        min="1"
+                        max="10"
+                        value={regForm.memberCount}
+                        onChange={e => setRegForm({...regForm, memberCount: e.target.value})}
+                        className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                        placeholder="1"
+                      />
+                    </div>
                   </div>
                   <div className="space-y-1">
                     <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Password</label>
