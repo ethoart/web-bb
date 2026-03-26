@@ -1,8 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { motion, useScroll, useTransform } from 'framer-motion';
-import { Gift, Trophy, Medal, Users, Calendar, MapPin, ChevronRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useEffect, useState, useRef } from 'react';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { Gift, Trophy, Medal, Users, Calendar, MapPin, ChevronRight, CheckCircle2, AlertCircle, Search, ChevronDown } from 'lucide-react';
+import { countries } from 'countries-list';
 
 import Footer from '../components/Footer';
+
+const countryList = Object.values(countries).map(c => c.name).sort();
 
 export default function Home() {
   const { scrollYProgress } = useScroll();
@@ -47,6 +50,25 @@ export default function Home() {
     teamName: '', robotName: '', country: 'Sri Lanka', captainName: '', email: '', phone: '', memberCount: '1', password: ''
   });
   const [regStatus, setRegStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+
+  // Country Search State
+  const [countrySearch, setCountrySearch] = useState('');
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const countryDropdownRef = useRef<HTMLDivElement>(null);
+
+  const filteredCountries = countryList.filter(c => 
+    c.toLowerCase().includes(countrySearch.toLowerCase())
+  );
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target as Node)) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -229,18 +251,58 @@ export default function Home() {
                   </div>
                   <div className="space-y-1">
                     <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Country</label>
-                    <select 
-                      value={regForm.country}
-                      onChange={e => setRegForm({...regForm, country: e.target.value})}
-                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium appearance-none"
-                    >
-                      <option value="Sri Lanka">Sri Lanka</option>
-                      <option value="India">India</option>
-                      <option value="USA">USA</option>
-                      <option value="UK">UK</option>
-                      <option value="Australia">Australia</option>
-                      <option value="Other">Other</option>
-                    </select>
+                    <div className="relative" ref={countryDropdownRef}>
+                      <div 
+                        onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                        className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white cursor-pointer flex justify-between items-center hover:border-[#E427F5] transition-colors"
+                      >
+                        <span className="font-medium">{regForm.country}</span>
+                        <ChevronDown className={`w-5 h-5 transition-transform ${isCountryDropdownOpen ? 'rotate-180' : ''}`} />
+                      </div>
+
+                      <AnimatePresence>
+                        {isCountryDropdownOpen && (
+                          <motion.div 
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            className="absolute z-[60] left-0 right-0 mt-2 bg-[#111] border-2 border-[#E427F5] shadow-2xl max-h-64 overflow-hidden flex flex-col"
+                          >
+                            <div className="p-2 border-b border-[#333] flex items-center gap-2 bg-black">
+                              <Search className="w-4 h-4 text-gray-500" />
+                              <input 
+                                type="text"
+                                value={countrySearch}
+                                onChange={(e) => setCountrySearch(e.target.value)}
+                                placeholder="Search country..."
+                                className="bg-transparent border-none outline-none text-white w-full text-sm py-1"
+                                onClick={(e) => e.stopPropagation()}
+                                autoFocus
+                              />
+                            </div>
+                            <div className="overflow-y-auto custom-scrollbar">
+                              {filteredCountries.length > 0 ? (
+                                filteredCountries.map((c) => (
+                                  <div 
+                                    key={c}
+                                    onClick={() => {
+                                      setRegForm({ ...regForm, country: c });
+                                      setIsCountryDropdownOpen(false);
+                                      setCountrySearch('');
+                                    }}
+                                    className="px-4 py-2 hover:bg-[#E427F5] hover:text-black cursor-pointer transition-colors text-sm font-medium"
+                                  >
+                                    {c}
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="px-4 py-3 text-gray-500 text-sm italic">No countries found</div>
+                              )}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div className="space-y-1">

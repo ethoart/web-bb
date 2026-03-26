@@ -408,22 +408,22 @@ export default function Admin() {
         }}
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
-        className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12 py-2"
+        className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12 py-1"
       >
         <div className="flex items-center gap-4">
           <img 
             src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
             alt="Bot Bash Logo" 
-            className="h-16 md:h-24 object-contain"
+            className="h-12 md:h-16 object-contain"
           />
           <h1 className="text-2xl md:text-3xl font-tech font-bold uppercase italic tracking-widest text-[#E427F5] hidden sm:block">Admin</h1>
         </div>
         <a href="/" className="font-tech text-xl uppercase italic hover:text-[#E427F5] transition-colors">Back to Site</a>
       </motion.header>
 
-      <div className="flex pt-[96px] md:pt-[120px]">
+      <div className="flex pt-[80px] md:pt-[100px]">
         {/* Sidebar */}
-        <aside className="w-64 min-h-[calc(100vh-120px)] bg-black border-r-4 border-[#333] p-6 fixed h-full overflow-y-auto hidden md:block">
+        <aside className="w-64 min-h-[calc(100vh-100px)] bg-black border-r-4 border-[#333] p-6 fixed h-full overflow-y-auto hidden md:block">
           <nav className="space-y-4 font-tech uppercase italic">
             <button 
               onClick={() => setActiveTab('registrations')}
