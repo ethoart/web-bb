@@ -562,10 +562,10 @@ export default function Home() {
           <h2 className="text-4xl md:text-6xl font-tech font-black italic uppercase tracking-tighter mb-12">
             POWERED BY
           </h2>
-          <div className="flex flex-wrap justify-center items-center gap-12 md:gap-24">
+          <div className="flex flex-wrap justify-center items-center gap-8 md:gap-12">
             {sponsors.length > 0 ? (
               sponsors.map((url, idx) => (
-                <img key={idx} src={url} alt={`Sponsor ${idx}`} className="max-w-full h-auto max-h-24 object-contain" referrerPolicy="no-referrer" />
+                <img key={idx} src={url} alt={`Sponsor ${idx}`} className="max-w-full h-auto max-h-12 object-contain" referrerPolicy="no-referrer" />
               ))
             ) : (
               <>
