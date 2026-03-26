@@ -26,6 +26,7 @@ export default function Admin() {
   const [eventLocation, setEventLocation] = useState('Royal MAS Arena, Colombo');
   const [bannerText, setBannerText] = useState('COMING SOON');
   const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
+  const [sponsorLogoSize, setSponsorLogoSize] = useState('20');
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Mail State
@@ -174,6 +175,9 @@ export default function Admin() {
         setLogoSize(setData.logoSize);
         localStorage.setItem('logoSize', setData.logoSize);
       }
+      if (setData.sponsorLogoSize) {
+        setSponsorLogoSize(setData.sponsorLogoSize);
+      }
 
       const galRes = await fetch('/api/gallery');
       const galData = await galRes.json();
@@ -310,6 +314,11 @@ export default function Admin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'logoSize', value: logoSize })
+      });
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'sponsorLogoSize', value: sponsorLogoSize })
       });
       localStorage.setItem('logoSize', logoSize);
       alert('Settings saved successfully!');
@@ -1147,6 +1156,25 @@ export default function Admin() {
                         <span className="font-tech text-2xl text-white w-12 text-center">{logoSize}</span>
                       </div>
                       <p className="text-xs text-white/40 font-tech uppercase italic">Adjust the height of the logo in the header (rem units equivalent).</p>
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
+                        Sponsor Logo Size
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <input 
+                          type="range" 
+                          min="5" 
+                          max="60" 
+                          step="1"
+                          value={sponsorLogoSize}
+                          onChange={e => setSponsorLogoSize(e.target.value)}
+                          className="flex-1 accent-[#E427F5]"
+                        />
+                        <span className="font-tech text-2xl text-white w-12 text-center">{sponsorLogoSize}</span>
+                      </div>
+                      <p className="text-xs text-white/40 font-tech uppercase italic">Adjust the maximum height of sponsor logos on the home page (rem units equivalent).</p>
                     </div>
 
                     <div className="pt-6 border-t-2 border-[#333] flex items-center justify-between">

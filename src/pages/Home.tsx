@@ -25,6 +25,7 @@ export default function Home() {
   const [eventLocation, setEventLocation] = useState('Royal MAS Arena, Colombo');
   const [bannerText, setBannerText] = useState('COMING SOON');
   const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
+  const [sponsorLogoSize, setSponsorLogoSize] = useState('20');
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
 
@@ -47,6 +48,9 @@ export default function Home() {
         if (data.logoSize) {
           setLogoSize(data.logoSize);
           localStorage.setItem('logoSize', data.logoSize);
+        }
+        if (data.sponsorLogoSize) {
+          setSponsorLogoSize(data.sponsorLogoSize);
         }
       })
       .catch(console.error);
@@ -565,7 +569,14 @@ export default function Home() {
           <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20">
             {sponsors.length > 0 ? (
               sponsors.map((url, idx) => (
-                <img key={idx} src={url} alt={`Sponsor ${idx}`} className="max-w-[250px] md:max-w-[350px] h-auto max-h-32 md:max-h-40 object-contain" referrerPolicy="no-referrer" />
+                <img 
+                  key={idx} 
+                  src={url} 
+                  alt={`Sponsor ${idx}`} 
+                  style={{ maxHeight: `${parseInt(sponsorLogoSize) * 4}px` }}
+                  className="max-w-[250px] md:max-w-[350px] h-auto object-contain" 
+                  referrerPolicy="no-referrer" 
+                />
               ))
             ) : (
               <>
