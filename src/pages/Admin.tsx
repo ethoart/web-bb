@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link, Upload, Trash2, Camera, Info } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link as LinkIcon, Upload, Trash2, Camera, Info } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
+import SEO from '../components/SEO';
 
 export default function Admin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,7 +25,7 @@ export default function Admin() {
   const [eventDate, setEventDate] = useState('To Be Announced (2026)');
   const [eventLocation, setEventLocation] = useState('Royal MAS Arena, Colombo');
   const [bannerText, setBannerText] = useState('COMING SOON');
-  const [logoSize, setLogoSize] = useState('10');
+  const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Mail State
@@ -165,7 +167,10 @@ export default function Admin() {
       if (setData.eventDate) setEventDate(setData.eventDate);
       if (setData.eventLocation) setEventLocation(setData.eventLocation);
       if (setData.bannerText) setBannerText(setData.bannerText);
-      if (setData.logoSize) setLogoSize(setData.logoSize);
+      if (setData.logoSize) {
+        setLogoSize(setData.logoSize);
+        localStorage.setItem('logoSize', setData.logoSize);
+      }
 
       const galRes = await fetch('/api/gallery');
       const galData = await galRes.json();
@@ -303,6 +308,7 @@ export default function Admin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'logoSize', value: logoSize })
       });
+      localStorage.setItem('logoSize', logoSize);
       alert('Settings saved successfully!');
     } catch (err) {
       console.error('Error saving settings:', err);
@@ -431,17 +437,15 @@ export default function Admin() {
     );
   }
 
+  const headerHeight = (parseInt(logoSize) * 4) + 24;
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans">
-      {/* Auto-hiding Admin Header */}
-      <motion.header 
-        variants={{
-          visible: { y: 0 },
-          hidden: { y: "-100%" }
-        }}
-        animate={hidden ? "hidden" : "visible"}
-        transition={{ duration: 0.35, ease: "easeInOut" }}
-        className="fixed top-0 left-0 w-full h-20 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
+      <SEO title="Admin Dashboard" description="Manage registrations, site settings, and gallery for BOT BASH." />
+      {/* Fixed Admin Header */}
+      <header 
+        style={{ height: `${headerHeight}px` }}
+        className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
       >
         <div className="flex items-center gap-4">
           <img 
@@ -452,12 +456,18 @@ export default function Admin() {
           />
           <h1 className="text-xl md:text-2xl font-tech font-bold uppercase italic tracking-widest text-[#E427F5] hidden sm:block">Admin</h1>
         </div>
-        <a href="/" className="font-tech text-lg uppercase italic hover:text-[#E427F5] transition-colors">Back to Site</a>
-      </motion.header>
+        <Link to="/" className="font-tech text-lg uppercase italic hover:text-[#E427F5] transition-colors">Back to Site</Link>
+      </header>
 
-      <div className="flex pt-20">
+      <div className="flex" style={{ paddingTop: `${headerHeight}px` }}>
         {/* Sidebar */}
-        <aside className="w-64 bg-black border-r-4 border-[#333] p-6 fixed top-20 h-[calc(100vh-80px)] overflow-y-auto hidden md:block">
+        <aside 
+          className="w-64 bg-black border-r-4 border-[#333] p-6 fixed border-t-0 overflow-y-auto hidden md:block"
+          style={{ 
+            top: `${headerHeight}px`, 
+            height: `calc(100vh - ${headerHeight}px)` 
+          }}
+        >
           <nav className="space-y-4 font-tech uppercase italic">
             <button 
               onClick={() => setActiveTab('registrations')}
@@ -839,7 +849,7 @@ export default function Admin() {
                     {/* Add Link */}
                     <div className="bg-black p-8 border-2 border-[#333]">
                       <h3 className="font-tech text-xl uppercase italic font-bold text-white mb-6 flex items-center gap-2">
-                        <Link className="w-5 h-5 text-[#E427F5]" /> Add Image Link
+                        <LinkIcon className="w-5 h-5 text-[#E427F5]" /> Add Image Link
                       </h3>
                       <form onSubmit={handleAddGalleryLink} className="space-y-4">
                         <input 

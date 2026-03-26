@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { LogOut, User, Shield, CheckCircle2, XCircle, Clock, QrCode, Bot, Upload, Info, Home } from 'lucide-react';
 
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function Profile() {
   const [email, setEmail] = useState('');
@@ -14,7 +16,7 @@ export default function Profile() {
   const [resetCode, setResetCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [resetMessage, setResetMessage] = useState('');
-  const [logoSize, setLogoSize] = useState('10');
+  const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
 
   // Robot Form State
   const [robotHeight, setRobotHeight] = useState('');
@@ -33,7 +35,10 @@ export default function Profile() {
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
-        if (data.logoSize) setLogoSize(data.logoSize);
+        if (data.logoSize) {
+          setLogoSize(data.logoSize);
+          localStorage.setItem('logoSize', data.logoSize);
+        }
       })
       .catch(console.error);
 
@@ -189,8 +194,11 @@ export default function Profile() {
     }
   };
 
+  const headerHeight = (parseInt(logoSize) * 4) + 24;
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans">
+      <SEO title="Profile" description="Manage your team registration and robot details for BOT BASH." />
       {/* Auto-hiding Header */}
       <motion.header 
         variants={{
@@ -199,7 +207,8 @@ export default function Profile() {
         }}
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
-        className="fixed top-0 left-0 w-full h-20 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
+        style={{ height: `${headerHeight}px` }}
+        className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
       >
         <div className="flex items-center gap-4">
           <img 
@@ -210,16 +219,16 @@ export default function Profile() {
           />
         </div>
         <nav className="hidden md:flex items-center gap-8 font-tech text-xl lg:text-2xl uppercase italic tracking-wider">
-          <a href="/" className="hover:text-[#E427F5] transition-colors">Home</a>
+          <Link to="/" className="hover:text-[#E427F5] transition-colors">Home</Link>
         </nav>
         <div className="flex items-center gap-3 md:gap-4">
-          <a 
-            href="/" 
+          <Link 
+            to="/" 
             className="md:hidden flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#E427F5] text-[#E427F5] hover:bg-[#E427F5] hover:text-black transition-all duration-300"
             title="Home"
           >
             <Home className="w-5 h-5" />
-          </a>
+          </Link>
           {user && (
             <button onClick={handleLogout} className="bg-[#E427F5] text-black font-tech text-lg md:text-xl uppercase italic font-bold px-4 md:px-6 py-2 hover:bg-white transition-colors transform -skew-x-12 flex items-center gap-2">
               <span className="block transform skew-x-12 flex items-center gap-2"><LogOut className="w-5 h-5" /> Logout</span>
@@ -228,7 +237,7 @@ export default function Profile() {
         </div>
       </motion.header>
 
-      <main className="pt-28 md:pt-32 pb-24 px-6 md:px-12 max-w-4xl mx-auto">
+      <main className="pb-24 px-6 md:px-12 max-w-4xl mx-auto" style={{ paddingTop: `${headerHeight + 32}px` }}>
         {!user ? (
           <div className="bg-[#111] border-4 border-[#222] p-8 relative max-w-md mx-auto">
             {/* Decorative corners */}

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Calendar, MapPin, Users, ChevronRight } from 'lucide-react';
 
 export default function Footer() {
@@ -53,8 +54,8 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto mt-16 pt-8 border-t-2 border-[#333] flex flex-col md:flex-row justify-between items-center text-gray-500 font-medium uppercase text-sm tracking-wider">
         <p>© 2026 BOT BASH. ALL RIGHTS RESERVED.</p>
         <div className="mt-4 md:mt-0 space-x-8">
-          <a href="/privacy" className="hover:text-white transition-colors">Privacy</a>
-          <a href="/terms" className="hover:text-white transition-colors">Terms</a>
+          <Link to="/privacy" className="hover:text-white transition-colors">Privacy</Link>
+          <Link to="/terms" className="hover:text-white transition-colors">Terms</Link>
         </div>
       </div>
     </footer>

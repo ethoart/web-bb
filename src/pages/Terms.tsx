@@ -1,23 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 export default function Terms() {
-  const [logoSize, setLogoSize] = useState('10');
+  const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
 
   useEffect(() => {
     fetch('/api/settings')
       .then(res => res.json())
       .then(data => {
-        if (data.logoSize) setLogoSize(data.logoSize);
+        if (data.logoSize) {
+          setLogoSize(data.logoSize);
+          localStorage.setItem('logoSize', data.logoSize);
+        }
       })
       .catch(console.error);
   }, []);
 
+  const headerHeight = (parseInt(logoSize) * 4) + 24;
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans">
+      <SEO title="Terms of Service" description="Terms of service for BOT BASH participants and visitors." />
       <motion.header 
-        className="fixed top-0 left-0 w-full h-20 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
+        style={{ height: `${headerHeight}px` }}
+        className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
       >
         <div className="flex items-center gap-4">
           <img 
@@ -28,11 +37,11 @@ export default function Terms() {
           />
         </div>
         <nav className="hidden md:flex items-center gap-8 font-tech text-xl lg:text-2xl uppercase italic tracking-wider">
-          <a href="/" className="hover:text-[#E427F5] transition-colors">Home</a>
+          <Link to="/" className="hover:text-[#E427F5] transition-colors">Home</Link>
         </nav>
       </motion.header>
 
-      <main className="pt-28 md:pt-32 pb-24 px-6 md:px-12 max-w-4xl mx-auto">
+      <main className="pb-24 px-6 md:px-12 max-w-4xl mx-auto" style={{ paddingTop: `${headerHeight + 32}px` }}>
         <h1 className="text-4xl md:text-6xl font-tech font-black italic uppercase tracking-tighter mb-8 text-[#E427F5]">
           Terms of Service
         </h1>

@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
 import { Gift, Trophy, Medal, Users, Calendar, MapPin, ChevronRight, CheckCircle2, AlertCircle, Search, ChevronDown, User } from 'lucide-react';
 import { countries } from 'countries-list';
 
 import Footer from '../components/Footer';
+import SEO from '../components/SEO';
 
 const countryList = Object.values(countries).map(c => c.name).sort();
 
@@ -22,7 +24,7 @@ export default function Home() {
   const [eventDate, setEventDate] = useState('To Be Announced (2026)');
   const [eventLocation, setEventLocation] = useState('Royal MAS Arena, Colombo');
   const [bannerText, setBannerText] = useState('COMING SOON');
-  const [logoSize, setLogoSize] = useState('10');
+  const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
 
   useEffect(() => {
@@ -39,7 +41,10 @@ export default function Home() {
         if (data.eventDate) setEventDate(data.eventDate);
         if (data.eventLocation) setEventLocation(data.eventLocation);
         if (data.bannerText) setBannerText(data.bannerText);
-        if (data.logoSize) setLogoSize(data.logoSize);
+        if (data.logoSize) {
+          setLogoSize(data.logoSize);
+          localStorage.setItem('logoSize', data.logoSize);
+        }
       })
       .catch(console.error);
 
@@ -99,11 +104,17 @@ export default function Home() {
     }
   };
 
+  const headerHeight = (parseInt(logoSize) * 4) + 24;
+
   return (
     <div className="relative min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden font-sans selection:bg-[#E427F5] selection:text-black">
+      <SEO title="Home" description="Sri Lanka's premier combat robotics competition. Witness high-octane robot battles and win massive prizes." />
       
       {/* Top Navigation Bar */}
-      <header className="fixed top-0 left-0 w-full h-20 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12">
+      <header 
+        style={{ height: `${headerHeight}px` }}
+        className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
+      >
         <div className="flex items-center gap-4">
           <img 
             src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
@@ -116,16 +127,16 @@ export default function Home() {
           <a href="#register" className="hover:text-[#E427F5] transition-colors">Register</a>
           <a href="#prizes" className="hover:text-[#E427F5] transition-colors">Prizes</a>
           <a href="#gallery" className="hover:text-[#E427F5] transition-colors">Gallery</a>
-          <a href="/profile" className="hover:text-[#E427F5] transition-colors">Profile</a>
+          <Link to="/profile" className="hover:text-[#E427F5] transition-colors">Profile</Link>
         </nav>
         <div className="flex items-center gap-3 md:gap-4">
-          <a 
-            href="/profile" 
+          <Link 
+            to="/profile" 
             className="md:hidden flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#E427F5] text-[#E427F5] hover:bg-[#E427F5] hover:text-black transition-all duration-300"
             title="Profile / Login"
           >
             <User className="w-5 h-5" />
-          </a>
+          </Link>
           <a href="#register" className="bg-[#E427F5] text-black font-tech text-lg md:text-2xl uppercase italic font-bold px-4 md:px-6 py-2 hover:bg-white transition-colors transform -skew-x-12">
             <span className="block transform skew-x-12">Enter Now</span>
           </a>
@@ -133,7 +144,10 @@ export default function Home() {
       </header>
 
       {/* 1. Hero Banner Section */}
-      <section className="relative w-full h-[90vh] md:h-screen flex items-center justify-center pt-20 overflow-hidden bg-[#111]">
+      <section 
+        className="relative w-full h-[90vh] md:h-screen flex items-center justify-center overflow-hidden bg-[#111]"
+        style={{ paddingTop: `${headerHeight}px` }}
+      >
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#E427F5 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
         
@@ -455,6 +469,7 @@ export default function Home() {
                   <img 
                     src={img.url} 
                     alt="Gallery Image"
+                    loading="lazy"
                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                     referrerPolicy="no-referrer"
                   />
@@ -474,6 +489,7 @@ export default function Home() {
                   <img 
                     src={`https://picsum.photos/seed/botbash${i}/800/600`} 
                     alt={`Bot Bash 2025 Memory ${i}`}
+                    loading="lazy"
                     className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
                     referrerPolicy="no-referrer"
                   />
