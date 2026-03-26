@@ -1,26 +1,38 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import Footer from '../components/Footer';
 
 export default function Privacy() {
+  const [logoSize, setLogoSize] = useState('10');
+
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(res => res.json())
+      .then(data => {
+        if (data.logoSize) setLogoSize(data.logoSize);
+      })
+      .catch(console.error);
+  }, []);
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white font-sans">
       <motion.header 
-        className="fixed top-0 left-0 w-full bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12 py-2"
+        className="fixed top-0 left-0 w-full h-20 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
       >
         <div className="flex items-center gap-4">
           <img 
             src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
             alt="Bot Bash Logo" 
-            className="h-16 md:h-24 object-contain"
+            style={{ height: `${parseInt(logoSize) * 4}px` }}
+            className="object-contain"
           />
         </div>
-        <nav className="hidden md:flex items-center gap-8 font-tech text-2xl uppercase italic tracking-wider">
+        <nav className="hidden md:flex items-center gap-8 font-tech text-xl lg:text-2xl uppercase italic tracking-wider">
           <a href="/" className="hover:text-[#E427F5] transition-colors">Home</a>
         </nav>
       </motion.header>
 
-      <main className="pt-40 pb-24 px-6 md:px-12 max-w-4xl mx-auto">
+      <main className="pt-28 md:pt-32 pb-24 px-6 md:px-12 max-w-4xl mx-auto">
         <h1 className="text-4xl md:text-6xl font-tech font-black italic uppercase tracking-tighter mb-8 text-[#E427F5]">
           Privacy Policy
         </h1>

@@ -23,6 +23,7 @@ export default function Admin() {
   const [eventDate, setEventDate] = useState('To Be Announced (2026)');
   const [eventLocation, setEventLocation] = useState('Royal MAS Arena, Colombo');
   const [bannerText, setBannerText] = useState('COMING SOON');
+  const [logoSize, setLogoSize] = useState('10');
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Mail State
@@ -164,6 +165,7 @@ export default function Admin() {
       if (setData.eventDate) setEventDate(setData.eventDate);
       if (setData.eventLocation) setEventLocation(setData.eventLocation);
       if (setData.bannerText) setBannerText(setData.bannerText);
+      if (setData.logoSize) setLogoSize(setData.logoSize);
 
       const galRes = await fetch('/api/gallery');
       const galData = await galRes.json();
@@ -296,6 +298,11 @@ export default function Admin() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'bannerText', value: bannerText })
       });
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'logoSize', value: logoSize })
+      });
       alert('Settings saved successfully!');
     } catch (err) {
       console.error('Error saving settings:', err);
@@ -379,7 +386,7 @@ export default function Admin() {
             <img 
               src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
               alt="Bot Bash Logo" 
-              className="h-12 object-contain"
+              className="h-8 object-contain"
             />
           </div>
           <h2 className="text-3xl font-tech font-bold uppercase italic tracking-wider text-center mb-6 text-[#E427F5]">Admin Login</h2>
@@ -434,22 +441,23 @@ export default function Admin() {
         }}
         animate={hidden ? "hidden" : "visible"}
         transition={{ duration: 0.35, ease: "easeInOut" }}
-        className="fixed top-0 left-0 w-full h-16 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
+        className="fixed top-0 left-0 w-full h-20 bg-[#0A0A0A] border-b-4 border-[#E427F5] z-50 flex justify-between items-center px-6 md:px-12"
       >
         <div className="flex items-center gap-4">
           <img 
             src="https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file%20(1).png?raw=true" 
             alt="Bot Bash Logo" 
-            className="h-8 md:h-10 object-contain"
+            style={{ height: `${parseInt(logoSize) * 4}px` }}
+            className="object-contain"
           />
           <h1 className="text-xl md:text-2xl font-tech font-bold uppercase italic tracking-widest text-[#E427F5] hidden sm:block">Admin</h1>
         </div>
         <a href="/" className="font-tech text-lg uppercase italic hover:text-[#E427F5] transition-colors">Back to Site</a>
       </motion.header>
 
-      <div className="flex pt-16">
+      <div className="flex pt-20">
         {/* Sidebar */}
-        <aside className="w-64 bg-black border-r-4 border-[#333] p-6 fixed top-16 h-[calc(100vh-64px)] overflow-y-auto hidden md:block">
+        <aside className="w-64 bg-black border-r-4 border-[#333] p-6 fixed top-20 h-[calc(100vh-80px)] overflow-y-auto hidden md:block">
           <nav className="space-y-4 font-tech uppercase italic">
             <button 
               onClick={() => setActiveTab('registrations')}
@@ -1049,6 +1057,25 @@ export default function Admin() {
                       />
                     </div>
 
+                    <div className="space-y-4">
+                      <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
+                        Logo Size (Desktop)
+                      </label>
+                      <div className="flex items-center gap-4">
+                        <input 
+                          type="range" 
+                          min="6" 
+                          max="24" 
+                          step="1"
+                          value={logoSize}
+                          onChange={e => setLogoSize(e.target.value)}
+                          className="flex-1 accent-[#E427F5]"
+                        />
+                        <span className="font-tech text-2xl text-white w-12 text-center">{logoSize}</span>
+                      </div>
+                      <p className="text-xs text-white/40 font-tech uppercase italic">Adjust the height of the logo in the header (rem units equivalent).</p>
+                    </div>
+
                     <div className="pt-6 border-t-2 border-[#333] flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-tech italic uppercase font-bold text-white mb-1">Reveal Status</h3>
@@ -1083,13 +1110,13 @@ export default function Admin() {
         {/* Team Details Modal */}
         {selectedTeam && (
           <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm cursor-pointer"
+            className="fixed inset-0 z-[100] flex items-start justify-center p-4 md:p-8 bg-black/90 backdrop-blur-sm cursor-pointer overflow-y-auto"
             onClick={() => setSelectedTeam(null)}
           >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-[#0A0A0A] border-4 border-[#E427F5] w-full max-w-2xl max-h-[90vh] overflow-y-auto relative cursor-default"
+              className="bg-[#0A0A0A] border-4 border-[#E427F5] w-full max-w-3xl relative cursor-default my-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <button 
