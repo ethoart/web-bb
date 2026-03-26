@@ -160,13 +160,24 @@ const RegistrationSchema = new mongoose.Schema({
   robotName: String,
   country: String,
   captainName: String,
-  email: String,
+  email: { type: String, unique: true },
   phone: String,
   memberCount: { type: Number, default: 1 },
   password: { type: String, required: true },
   status: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  robotHeight: String,
+  robotWeight: String,
+  robotMaterials: String,
+  robotDimensions: String,
+  robotPowerSource: String,
+  robotWeapons: String,
+  robotAdditionalInfo: String,
+  robotImage: String,
+  robotStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   participated: { type: Boolean, default: false },
   qrCode: String,
+  resetCode: String,
+  resetCodeExpires: Date,
   createdAt: { type: Date, default: Date.now }
 });
 const Registration = mongoose.model('Registration', RegistrationSchema);
@@ -191,6 +202,7 @@ let mockSettings: any = {
   prizePoolFirst: '$500,000',
   isRevealed: false,
   bannerImage: 'https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file.png?raw=true',
+  bannerText: 'COMING SOON',
   sponsors: '',
   facebookLink: 'https://www.facebook.com/profile.php?id=61573020699132',
   instagramLink: '#',
@@ -310,6 +322,21 @@ app.delete('/api/admin/registrations/:id', async (req, res) => {
 
 app.post('/api/register', async (req, res) => {
   try {
+    const { email } = req.body;
+    
+    // Check if email already exists
+    if (isDbConnected) {
+      const existing = await Registration.findOne({ email });
+      if (existing) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+    } else {
+      const existing = mockRegistrations.find(r => r.email === email);
+      if (existing) {
+        return res.status(400).json({ error: 'Email already registered' });
+      }
+    }
+
     let newReg;
     if (isDbConnected) {
       newReg = new Registration(req.body);
@@ -390,6 +417,183 @@ app.post('/api/login', async (req, res) => {
     } else {
       res.status(401).json({ error: 'Invalid email or password' });
     }
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+    let user;
+    if (isDbConnected) {
+      user = await Registration.findOne({ email });
+    } else {
+      user = mockRegistrations.find(r => r.email === email);
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'Email not found' });
+    }
+
+    const resetCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const expires = new Date(Date.now() + 3600000); // 1 hour
+
+    if (isDbConnected) {
+      user.resetCode = resetCode;
+      user.resetCodeExpires = expires;
+      await user.save();
+    } else {
+      user.resetCode = resetCode;
+      user.resetCodeExpires = expires;
+    }
+
+    // Send Email
+    if (process.env.SMTP_USER || process.env.GMAIL_USER) {
+      const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER;
+      const html = `
+        <p>Hello <strong>${user.captainName}</strong>,</p>
+        <p>You requested a password reset for your Bot Bash account.</p>
+        <p>Your verification code is:</p>
+        <div style="background: #222; padding: 20px; text-align: center; font-size: 32px; font-weight: 900; color: #E427F5; letter-spacing: 5px; margin: 20px 0;">
+          ${resetCode}
+        </div>
+        <p>This code will expire in 1 hour.</p>
+        <p>If you did not request this, please ignore this email.</p>
+      `;
+
+      await transporter.sendMail({
+        from: `"Bot Bash" <${fromEmail}>`,
+        to: user.email,
+        subject: `Password Reset Verification Code`,
+        html: getEmailTemplate(`Password Reset`, html)
+      });
+    } else {
+      console.log('Mock Reset Code for', email, ':', resetCode);
+    }
+
+    res.json({ success: true, message: 'Verification code sent to email' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/reset-password', async (req, res) => {
+  try {
+    const { email, code, newPassword } = req.body;
+    let user;
+    if (isDbConnected) {
+      user = await Registration.findOne({ 
+        email, 
+        resetCode: code,
+        resetCodeExpires: { $gt: new Date() }
+      });
+    } else {
+      user = mockRegistrations.find(r => 
+        r.email === email && 
+        r.resetCode === code && 
+        r.resetCodeExpires > new Date()
+      );
+    }
+
+    if (!user) {
+      return res.status(400).json({ error: 'Invalid or expired verification code' });
+    }
+
+    if (isDbConnected) {
+      user.password = newPassword;
+      user.resetCode = undefined;
+      user.resetCodeExpires = undefined;
+      await user.save();
+    } else {
+      user.password = newPassword;
+      user.resetCode = undefined;
+      user.resetCodeExpires = undefined;
+    }
+
+    res.json({ success: true, message: 'Password reset successful' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/profile/robot', upload.single('image'), async (req, res) => {
+  try {
+    const { userId, robotHeight, robotWeight, robotMaterials, robotDimensions, robotPowerSource, robotWeapons, robotAdditionalInfo } = req.body;
+    let user;
+
+    if (isDbConnected) {
+      user = await Registration.findById(userId);
+    } else {
+      user = mockRegistrations.find(r => r._id === userId);
+    }
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.robotHeight = robotHeight;
+    user.robotWeight = robotWeight;
+    user.robotMaterials = robotMaterials;
+    user.robotDimensions = robotDimensions;
+    user.robotPowerSource = robotPowerSource;
+    user.robotWeapons = robotWeapons;
+    user.robotAdditionalInfo = robotAdditionalInfo;
+    user.robotStatus = 'pending'; // Reset to pending when updated
+
+    if (req.file) {
+      user.robotImage = `/uploads/${req.file.filename}`;
+    }
+
+    if (isDbConnected) {
+      await user.save();
+    }
+
+    res.json({ success: true, user });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/registrations/:id/robot-status', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+    let user;
+
+    if (isDbConnected) {
+      user = await Registration.findById(id);
+    } else {
+      user = mockRegistrations.find(r => r._id === id);
+    }
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.robotStatus = status;
+
+    if (isDbConnected) {
+      await user.save();
+    }
+
+    // Send Email to User about Robot Status
+    if (process.env.SMTP_USER || process.env.GMAIL_USER) {
+      try {
+        const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER;
+        let mailOptions: any = {
+          from: `"Bot Bash" <${fromEmail}>`,
+          to: user.email,
+          subject: `Robot Registration ${status.toUpperCase()}`,
+          html: getEmailTemplate(`Robot Registration ${status.toUpperCase()}`, `
+            <p>Hello <strong>${user.captainName}</strong>,</p>
+            <p>Your robot registration for team <strong>${user.teamName}</strong> has been <strong>${status}</strong>.</p>
+            <p>Please check your profile for more details.</p>
+          `)
+        };
+        await transporter.sendMail(mailOptions);
+      } catch (e) {
+        console.error('Failed to send robot status email', e);
+      }
+    }
+
+    res.json({ success: true, user });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

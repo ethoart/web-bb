@@ -21,6 +21,7 @@ export default function Home() {
   const [youtubeLink, setYoutubeLink] = useState('#');
   const [eventDate, setEventDate] = useState('To Be Announced (2026)');
   const [eventLocation, setEventLocation] = useState('Royal MAS Arena, Colombo');
+  const [bannerText, setBannerText] = useState('COMING SOON');
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
 
   useEffect(() => {
@@ -36,6 +37,7 @@ export default function Home() {
         if (data.youtubeLink) setYoutubeLink(data.youtubeLink);
         if (data.eventDate) setEventDate(data.eventDate);
         if (data.eventLocation) setEventLocation(data.eventLocation);
+        if (data.bannerText) setBannerText(data.bannerText);
       })
       .catch(console.error);
 
@@ -50,6 +52,7 @@ export default function Home() {
     teamName: '', robotName: '', country: 'Sri Lanka', captainName: '', email: '', phone: '', memberCount: '1', password: ''
   });
   const [regStatus, setRegStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  const [regError, setRegError] = useState('');
 
   // Country Search State
   const [countrySearch, setCountrySearch] = useState('');
@@ -73,20 +76,24 @@ export default function Home() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setRegStatus('submitting');
+    setRegError('');
     try {
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(regForm)
       });
+      const data = await res.json();
       if (res.ok) {
         setRegStatus('success');
         setRegForm({ teamName: '', robotName: '', country: 'Sri Lanka', captainName: '', email: '', phone: '', memberCount: '1', password: '' });
       } else {
         setRegStatus('error');
+        setRegError(data.error || 'Registration failed. Please try again.');
       }
     } catch (err) {
       setRegStatus('error');
+      setRegError('A network error occurred. Please check your connection.');
     }
   };
 
@@ -158,7 +165,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.5 }}
             className="text-6xl md:text-9xl font-tech font-black italic uppercase tracking-tighter leading-none text-white drop-shadow-2xl"
           >
-            COMING SOON
+            {bannerText}
           </motion.h2>
         </div>
       </section>
@@ -369,7 +376,7 @@ export default function Home() {
                   {regStatus === 'error' && (
                     <div className="bg-red-900/50 border border-red-500 text-red-200 p-3 flex items-center gap-2">
                       <AlertCircle className="w-5 h-5" />
-                      <span className="font-medium">Error submitting registration. Try again.</span>
+                      <span className="font-medium">{regError}</span>
                     </div>
                   )}
 

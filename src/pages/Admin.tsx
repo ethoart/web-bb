@@ -22,6 +22,7 @@ export default function Admin() {
   const [youtubeLink, setYoutubeLink] = useState('#');
   const [eventDate, setEventDate] = useState('To Be Announced (2026)');
   const [eventLocation, setEventLocation] = useState('Royal MAS Arena, Colombo');
+  const [bannerText, setBannerText] = useState('COMING SOON');
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Mail State
@@ -162,6 +163,7 @@ export default function Admin() {
       if (setData.youtubeLink) setYoutubeLink(setData.youtubeLink);
       if (setData.eventDate) setEventDate(setData.eventDate);
       if (setData.eventLocation) setEventLocation(setData.eventLocation);
+      if (setData.bannerText) setBannerText(setData.bannerText);
 
       const galRes = await fetch('/api/gallery');
       const galData = await galRes.json();
@@ -183,6 +185,25 @@ export default function Admin() {
       fetchData();
     } catch (err) {
       console.error('Error updating status:', err);
+    }
+  };
+
+  const handleRobotStatusChange = async (id: string, status: string) => {
+    try {
+      const res = await fetch(`/api/admin/registrations/${id}/robot-status`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        fetchData();
+        // Update selected team if it's the one being modified
+        if (selectedTeam && selectedTeam._id === id) {
+          setSelectedTeam({ ...selectedTeam, robotStatus: status });
+        }
+      }
+    } catch (err) {
+      console.error('Error updating robot status:', err);
     }
   };
 
@@ -269,6 +290,11 @@ export default function Admin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'eventLocation', value: eventLocation })
+      });
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'bannerText', value: bannerText })
       });
       alert('Settings saved successfully!');
     } catch (err) {
@@ -503,6 +529,7 @@ export default function Admin() {
                           <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Country</th>
                           <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Contact</th>
                           <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Status</th>
+                          <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Robot Status</th>
                           <th className="p-4 font-tech italic text-[#E427F5] uppercase tracking-wider">Actions</th>
                         </tr>
                       </thead>
@@ -533,6 +560,12 @@ export default function Admin() {
                                 {reg.status === 'approved' && <span className="text-green-500 font-bold">APPROVED</span>}
                                 {reg.status === 'rejected' && <span className="text-red-500 font-bold">REJECTED</span>}
                                 {reg.participated && <div className="text-xs text-[#E427F5] mt-1">PARTICIPATED</div>}
+                              </td>
+                              <td className="p-4 text-sm font-tech uppercase italic">
+                                {reg.robotStatus === 'pending' && <span className="text-yellow-500 font-bold">PENDING</span>}
+                                {reg.robotStatus === 'approved' && <span className="text-green-500 font-bold">APPROVED</span>}
+                                {reg.robotStatus === 'rejected' && <span className="text-red-500 font-bold">REJECTED</span>}
+                                {!reg.robotStatus && <span className="text-gray-500 font-bold italic">NOT REGISTERED</span>}
                               </td>
                               <td className="p-4">
                                 <div className="flex gap-2">
@@ -828,6 +861,19 @@ export default function Admin() {
 
                     <div className="space-y-4">
                       <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
+                        Banner "Coming Soon" Text
+                      </label>
+                      <input 
+                        type="text" 
+                        value={bannerText}
+                        onChange={e => setBannerText(e.target.value)}
+                        className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-xl font-tech"
+                        placeholder="e.g. COMING SOON"
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
                         Sponsors Logo Image
                       </label>
                       <div className="flex flex-col gap-4">
@@ -1014,6 +1060,86 @@ export default function Admin() {
                     <div>
                       <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Phone Number</label>
                       <p className="text-xl font-bold text-white">{selectedTeam.phone}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Robot Registration Details */}
+                <div className="mt-8 pt-8 border-t border-[#333]">
+                  <h4 className="text-lg font-tech font-bold uppercase italic text-[#E427F5] mb-4">Robot Registration Details</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Height</label>
+                        <p className="text-white font-medium">{selectedTeam.robotHeight ? `${selectedTeam.robotHeight} cm` : 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Weight</label>
+                        <p className="text-white font-medium">{selectedTeam.robotWeight ? `${selectedTeam.robotWeight} kg` : 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Dimensions</label>
+                        <p className="text-white font-medium">{selectedTeam.robotDimensions || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Materials</label>
+                        <p className="text-white font-medium">{selectedTeam.robotMaterials || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Power Source</label>
+                        <p className="text-white font-medium">{selectedTeam.robotPowerSource || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Weapons</label>
+                        <p className="text-white font-medium">{selectedTeam.robotWeapons || 'Not provided'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Additional Info</label>
+                        <p className="text-white font-medium text-sm">{selectedTeam.robotAdditionalInfo || 'None'}</p>
+                      </div>
+                      <div>
+                        <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Robot Status</label>
+                        <div className="flex items-center gap-2">
+                          <span className={`px-3 py-1 text-xs font-tech uppercase italic font-bold ${
+                            selectedTeam.robotStatus === 'approved' ? 'bg-green-500/20 text-green-400 border border-green-500' :
+                            selectedTeam.robotStatus === 'rejected' ? 'bg-red-500/20 text-red-400 border border-red-500' :
+                            'bg-yellow-500/20 text-yellow-400 border border-yellow-500'
+                          }`}>
+                            {selectedTeam.robotStatus || 'pending'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2 pt-2">
+                        <button
+                          onClick={() => handleRobotStatusChange(selectedTeam._id, 'approved')}
+                          className="flex-1 bg-green-500 text-black font-tech uppercase italic font-bold py-2 text-sm hover:bg-white transition-colors"
+                        >
+                          Approve Robot
+                        </button>
+                        <button
+                          onClick={() => handleRobotStatusChange(selectedTeam._id, 'rejected')}
+                          className="flex-1 bg-red-500 text-black font-tech uppercase italic font-bold py-2 text-sm hover:bg-white transition-colors"
+                        >
+                          Reject Robot
+                        </button>
+                      </div>
+                    </div>
+                    <div>
+                      <label className="text-xs font-tech uppercase italic text-white/40 block mb-2">Robot Image</label>
+                      {selectedTeam.robotImage ? (
+                        <div className="border-2 border-[#333] p-2 bg-[#111]">
+                          <img 
+                            src={selectedTeam.robotImage} 
+                            alt="Robot" 
+                            className="w-full h-48 object-contain"
+                            referrerPolicy="no-referrer"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-full h-48 border-2 border-dashed border-[#333] flex items-center justify-center text-white/20 font-tech uppercase italic">
+                          No Image Uploaded
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

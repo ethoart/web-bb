@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
-import { LogOut, User, Shield, CheckCircle2, XCircle, Clock, QrCode } from 'lucide-react';
+import { LogOut, User, Shield, CheckCircle2, XCircle, Clock, QrCode, Bot, Upload, Info } from 'lucide-react';
 
 import Footer from '../components/Footer';
 
@@ -10,6 +10,36 @@ export default function Profile() {
   const [user, setUser] = useState<any>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [forgotPasswordMode, setForgotPasswordMode] = useState<'none' | 'request' | 'reset'>('none');
+  const [resetCode, setResetCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetMessage, setResetMessage] = useState('');
+
+  // Robot Form State
+  const [robotHeight, setRobotHeight] = useState('');
+  const [robotWeight, setRobotWeight] = useState('');
+  const [robotMaterials, setRobotMaterials] = useState('');
+  const [robotDimensions, setRobotDimensions] = useState('');
+  const [robotPowerSource, setRobotPowerSource] = useState('');
+  const [robotWeapons, setRobotWeapons] = useState('');
+  const [robotAdditionalInfo, setRobotAdditionalInfo] = useState('');
+  const [robotImage, setRobotImage] = useState<File | null>(null);
+  const [robotPreview, setRobotPreview] = useState<string | null>(null);
+  const [submittingRobot, setSubmittingRobot] = useState(false);
+  const [robotMessage, setRobotMessage] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      setRobotHeight(user.robotHeight || '');
+      setRobotWeight(user.robotWeight || '');
+      setRobotMaterials(user.robotMaterials || '');
+      setRobotDimensions(user.robotDimensions || '');
+      setRobotPowerSource(user.robotPowerSource || '');
+      setRobotWeapons(user.robotWeapons || '');
+      setRobotAdditionalInfo(user.robotAdditionalInfo || '');
+      setRobotPreview(user.robotImage || null);
+    }
+  }, [user]);
 
   // Auto-hide header logic
   const { scrollY } = useScroll();
@@ -51,6 +81,104 @@ export default function Profile() {
     setUser(null);
     setEmail('');
     setPassword('');
+    setForgotPasswordMode('none');
+    setResetCode('');
+    setNewPassword('');
+    setResetMessage('');
+  };
+
+  const handleForgotPasswordRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setForgotPasswordMode('reset');
+        setResetMessage('Verification code sent to your email.');
+      } else {
+        setError(data.error || 'Failed to send reset code');
+      }
+    } catch (err) {
+      setError('Network error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code: resetCode, newPassword })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setForgotPasswordMode('none');
+        setResetMessage('Password reset successful! You can now login.');
+        setResetCode('');
+        setNewPassword('');
+      } else {
+        setError(data.error || 'Failed to reset password');
+      }
+    } catch (err) {
+      setError('Network error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRobotSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingRobot(true);
+    setRobotMessage('');
+    try {
+      const formData = new FormData();
+      formData.append('userId', user._id);
+      formData.append('robotHeight', robotHeight);
+      formData.append('robotWeight', robotWeight);
+      formData.append('robotMaterials', robotMaterials);
+      formData.append('robotDimensions', robotDimensions);
+      formData.append('robotPowerSource', robotPowerSource);
+      formData.append('robotWeapons', robotWeapons);
+      formData.append('robotAdditionalInfo', robotAdditionalInfo);
+      if (robotImage) {
+        formData.append('image', robotImage);
+      }
+
+      const res = await fetch('/api/profile/robot', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data.user);
+        setRobotMessage('Robot details updated successfully! Pending admin approval.');
+      } else {
+        setRobotMessage(data.error || 'Failed to update robot details');
+      }
+    } catch (err) {
+      setRobotMessage('Network error');
+    } finally {
+      setSubmittingRobot(false);
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setRobotImage(file);
+      setRobotPreview(URL.createObjectURL(file));
+    }
   };
 
   return (
@@ -91,46 +219,180 @@ export default function Profile() {
             <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-[#E427F5] -translate-x-1 translate-y-1" />
             <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-[#E427F5] translate-x-1 translate-y-1" />
 
-            <h2 className="text-4xl font-tech font-black italic uppercase tracking-tighter text-white mb-8 text-center">
-              TEAM <span className="text-[#E427F5]">LOGIN</span>
-            </h2>
+            {forgotPasswordMode === 'none' && (
+              <>
+                <h2 className="text-4xl font-tech font-black italic uppercase tracking-tighter text-white mb-8 text-center">
+                  TEAM <span className="text-[#E427F5]">LOGIN</span>
+                </h2>
 
-            <form onSubmit={handleLogin} className="space-y-6">
-              <div className="space-y-2">
-                <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Email Address</label>
-                <input 
-                  required
-                  type="email" 
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Password</label>
-                <input 
-                  required
-                  type="password" 
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
-                />
-              </div>
+                {resetMessage && (
+                  <div className="bg-green-900/30 border border-green-500/50 text-green-400 p-3 mb-6 text-center font-bold uppercase italic text-sm">
+                    {resetMessage}
+                  </div>
+                )}
 
-              {error && (
-                <div className="text-red-500 font-medium text-center">{error}</div>
-              )}
+                <form onSubmit={handleLogin} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Email Address</label>
+                    <input 
+                      required
+                      type="email" 
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Password</label>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setForgotPasswordMode('request');
+                          setError('');
+                          setResetMessage('');
+                        }}
+                        className="text-[#E427F5] text-sm font-bold uppercase italic hover:text-white transition-colors"
+                      >
+                        Forgot?
+                      </button>
+                    </div>
+                    <input 
+                      required
+                      type="password" 
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                    />
+                  </div>
 
-              <button 
-                type="submit"
-                disabled={loading}
-                className="w-full bg-[#E427F5] text-black font-tech text-2xl uppercase italic font-black py-3 hover:bg-white transition-colors transform -skew-x-12 disabled:opacity-50"
-              >
-                <span className="block transform skew-x-12">
-                  {loading ? 'LOGGING IN...' : 'LOGIN'}
-                </span>
-              </button>
-            </form>
+                  {error && (
+                    <div className="text-red-500 font-medium text-center">{error}</div>
+                  )}
+
+                  <button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full bg-[#E427F5] text-black font-tech text-2xl uppercase italic font-black py-3 hover:bg-white transition-colors transform -skew-x-12 disabled:opacity-50"
+                  >
+                    <span className="block transform skew-x-12">
+                      {loading ? 'LOGGING IN...' : 'LOGIN'}
+                    </span>
+                  </button>
+                </form>
+              </>
+            )}
+
+            {forgotPasswordMode === 'request' && (
+              <>
+                <h2 className="text-4xl font-tech font-black italic uppercase tracking-tighter text-white mb-8 text-center">
+                  RESET <span className="text-[#E427F5]">PASSWORD</span>
+                </h2>
+
+                <p className="text-gray-400 text-center mb-8 font-tech uppercase italic">
+                  Enter your email to receive a verification code.
+                </p>
+
+                <form onSubmit={handleForgotPasswordRequest} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Email Address</label>
+                    <input 
+                      required
+                      type="email" 
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="text-red-500 font-medium text-center">{error}</div>
+                  )}
+
+                  <div className="flex flex-col gap-4">
+                    <button 
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-[#E427F5] text-black font-tech text-2xl uppercase italic font-black py-3 hover:bg-white transition-colors transform -skew-x-12 disabled:opacity-50"
+                    >
+                      <span className="block transform skew-x-12">
+                        {loading ? 'SENDING...' : 'SEND CODE'}
+                      </span>
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setForgotPasswordMode('none')}
+                      className="text-gray-500 font-tech uppercase italic font-bold hover:text-white transition-colors"
+                    >
+                      Back to Login
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
+
+            {forgotPasswordMode === 'reset' && (
+              <>
+                <h2 className="text-4xl font-tech font-black italic uppercase tracking-tighter text-white mb-8 text-center">
+                  VERIFY <span className="text-[#E427F5]">CODE</span>
+                </h2>
+
+                {resetMessage && (
+                  <div className="bg-green-900/30 border border-green-500/50 text-green-400 p-3 mb-6 text-center font-bold uppercase italic text-sm">
+                    {resetMessage}
+                  </div>
+                )}
+
+                <form onSubmit={handleResetPassword} className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Verification Code</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={resetCode}
+                      onChange={e => setResetCode(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium text-center tracking-[1em] text-2xl"
+                      placeholder="000000"
+                      maxLength={6}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">New Password</label>
+                    <input 
+                      required
+                      type="password" 
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                      placeholder="Enter new password"
+                    />
+                  </div>
+
+                  {error && (
+                    <div className="text-red-500 font-medium text-center">{error}</div>
+                  )}
+
+                  <div className="flex flex-col gap-4">
+                    <button 
+                      type="submit"
+                      disabled={loading}
+                      className="w-full bg-[#E427F5] text-black font-tech text-2xl uppercase italic font-black py-3 hover:bg-white transition-colors transform -skew-x-12 disabled:opacity-50"
+                    >
+                      <span className="block transform skew-x-12">
+                        {loading ? 'RESETTING...' : 'RESET PASSWORD'}
+                      </span>
+                    </button>
+                    <button 
+                      type="button"
+                      onClick={() => setForgotPasswordMode('request')}
+                      className="text-gray-500 font-tech uppercase italic font-bold hover:text-white transition-colors"
+                    >
+                      Resend Code
+                    </button>
+                  </div>
+                </form>
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-12">
@@ -190,6 +452,160 @@ export default function Profile() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Robot Registration Section */}
+            <div className="bg-[#111] border-4 border-[#333] p-8 relative">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                <h3 className="text-4xl font-tech font-bold italic uppercase tracking-widest text-[#E427F5] flex items-center gap-3">
+                  <Bot className="w-10 h-10" /> Robot Registration
+                </h3>
+                <div className={`flex items-center gap-2 px-4 py-1 border-2 font-tech uppercase italic font-bold ${
+                  user.robotStatus === 'approved' ? 'border-green-500 text-green-500' :
+                  user.robotStatus === 'rejected' ? 'border-red-500 text-red-500' :
+                  'border-yellow-500 text-yellow-500'
+                }`}>
+                  {user.robotStatus === 'approved' ? <CheckCircle2 className="w-5 h-5" /> :
+                   user.robotStatus === 'rejected' ? <XCircle className="w-5 h-5" /> :
+                   <Clock className="w-5 h-5" />}
+                  {user.robotStatus || 'PENDING'}
+                </div>
+              </div>
+
+              <form onSubmit={handleRobotSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300 flex items-center gap-2">
+                      Robot Height <span className="text-xs text-gray-500">(cm)</span>
+                    </label>
+                    <input 
+                      required
+                      type="text" 
+                      value={robotHeight}
+                      onChange={e => setRobotHeight(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                      placeholder="e.g. 45"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300 flex items-center gap-2">
+                      Robot Weight <span className="text-xs text-gray-500">(kg)</span>
+                    </label>
+                    <input 
+                      required
+                      type="text" 
+                      value={robotWeight}
+                      onChange={e => setRobotWeight(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                      placeholder="e.g. 15"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Materials Used</label>
+                    <textarea 
+                      required
+                      value={robotMaterials}
+                      onChange={e => setRobotMaterials(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium h-24 resize-none"
+                      placeholder="e.g. Aluminum, Carbon Fiber, High-torque servos..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Dimensions (L x W x H)</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={robotDimensions}
+                      onChange={e => setRobotDimensions(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                      placeholder="e.g. 50cm x 50cm x 45cm"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Power Source</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={robotPowerSource}
+                      onChange={e => setRobotPowerSource(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium"
+                      placeholder="e.g. 6S LiPo Battery, 5000mAh"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Weapons / Systems</label>
+                    <textarea 
+                      required
+                      value={robotWeapons}
+                      onChange={e => setRobotWeapons(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium h-24 resize-none"
+                      placeholder="e.g. Vertical Spinner, Wedge, Active Lifter..."
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Additional Info</label>
+                    <textarea 
+                      value={robotAdditionalInfo}
+                      onChange={e => setRobotAdditionalInfo(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium h-24 resize-none"
+                      placeholder="Anything else we should know about your robot fighter?"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Robot Image</label>
+                    <div className="relative group cursor-pointer">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      />
+                      <div className="w-full aspect-video bg-black border-2 border-dashed border-[#333] group-hover:border-[#E427F5] transition-colors flex flex-col items-center justify-center relative overflow-hidden">
+                        {robotPreview ? (
+                          <img src={robotPreview} alt="Robot Preview" className="w-full h-full object-cover" />
+                        ) : (
+                          <>
+                            <Upload className="w-12 h-12 text-gray-500 group-hover:text-[#E427F5] mb-2" />
+                            <span className="text-gray-500 group-hover:text-[#E427F5] font-tech uppercase italic">Click to upload image</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-blue-900/20 border border-blue-500/50 p-4 flex gap-3">
+                    <Info className="w-6 h-6 text-blue-400 shrink-0" />
+                    <p className="text-sm text-blue-200">
+                      Please provide accurate measurements. Your robot will be physically inspected on event day to verify these details.
+                    </p>
+                  </div>
+
+                  {robotMessage && (
+                    <div className={`p-4 text-center font-bold uppercase italic tracking-wider ${
+                      robotMessage.includes('successfully') ? 'bg-green-900/30 text-green-400 border border-green-500/50' : 'bg-red-900/30 text-red-400 border border-red-500/50'
+                    }`}>
+                      {robotMessage}
+                    </div>
+                  )}
+
+                  <button 
+                    type="submit"
+                    disabled={submittingRobot}
+                    className="w-full bg-[#E427F5] text-black font-tech text-2xl uppercase italic font-black py-4 hover:bg-white transition-colors transform -skew-x-12 disabled:opacity-50"
+                  >
+                    <span className="block transform skew-x-12">
+                      {submittingRobot ? 'UPDATING...' : 'UPDATE ROBOT DETAILS'}
+                    </span>
+                  </button>
+                </div>
+              </form>
             </div>
 
             {/* QR Pass Section (Only if approved) */}
