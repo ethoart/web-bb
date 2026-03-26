@@ -190,10 +190,13 @@ let mockGalleryImages: any[] = [];
 let mockSettings: any = {
   prizePoolFirst: '$500,000',
   isRevealed: false,
+  bannerImage: 'https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file.png?raw=true',
   sponsors: '',
   facebookLink: 'https://www.facebook.com/profile.php?id=61573020699132',
   instagramLink: '#',
-  youtubeLink: '#'
+  youtubeLink: '#',
+  eventDate: 'To Be Announced (2026)',
+  eventLocation: 'Royal MAS Arena, Colombo'
 };
 
 // API Routes

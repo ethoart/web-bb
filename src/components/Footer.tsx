@@ -5,6 +5,8 @@ export default function Footer() {
   const [facebookLink, setFacebookLink] = useState('https://www.facebook.com/profile.php?id=61573020699132');
   const [instagramLink, setInstagramLink] = useState('#');
   const [youtubeLink, setYoutubeLink] = useState('#');
+  const [eventDate, setEventDate] = useState('2026 Season');
+  const [eventLocation, setEventLocation] = useState('Colombo, Sri Lanka');
 
   useEffect(() => {
     fetch('/api/settings')
@@ -13,6 +15,8 @@ export default function Footer() {
         if (data.facebookLink) setFacebookLink(data.facebookLink);
         if (data.instagramLink) setInstagramLink(data.instagramLink);
         if (data.youtubeLink) setYoutubeLink(data.youtubeLink);
+        if (data.eventDate) setEventDate(data.eventDate);
+        if (data.eventLocation) setEventLocation(data.eventLocation);
       })
       .catch(console.error);
   }, []);
@@ -30,8 +34,8 @@ export default function Footer() {
         <div>
           <h4 className="text-white font-tech text-3xl font-bold italic uppercase tracking-widest mb-6">EVENT</h4>
           <ul className="space-y-4 text-gray-400 font-medium">
-            <li className="flex items-center gap-3"><Calendar className="w-5 h-5 text-[#E427F5]" /> 2026 Season</li>
-            <li className="flex items-center gap-3"><MapPin className="w-5 h-5 text-[#E427F5]" /> Colombo, Sri Lanka</li>
+            <li className="flex items-center gap-3"><Calendar className="w-5 h-5 text-[#E427F5]" /> {eventDate}</li>
+            <li className="flex items-center gap-3"><MapPin className="w-5 h-5 text-[#E427F5]" /> {eventLocation}</li>
             <li className="flex items-center gap-3"><Users className="w-5 h-5 text-[#E427F5]" /> Tech to Oxygen</li>
           </ul>
         </div>

@@ -20,6 +20,8 @@ export default function Admin() {
   const [facebookLink, setFacebookLink] = useState('https://www.facebook.com/profile.php?id=61573020699132');
   const [instagramLink, setInstagramLink] = useState('#');
   const [youtubeLink, setYoutubeLink] = useState('#');
+  const [eventDate, setEventDate] = useState('To Be Announced (2026)');
+  const [eventLocation, setEventLocation] = useState('Royal MAS Arena, Colombo');
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Mail State
@@ -158,6 +160,8 @@ export default function Admin() {
       if (setData.facebookLink) setFacebookLink(setData.facebookLink);
       if (setData.instagramLink) setInstagramLink(setData.instagramLink);
       if (setData.youtubeLink) setYoutubeLink(setData.youtubeLink);
+      if (setData.eventDate) setEventDate(setData.eventDate);
+      if (setData.eventLocation) setEventLocation(setData.eventLocation);
 
       const galRes = await fetch('/api/gallery');
       const galData = await galRes.json();
@@ -255,6 +259,16 @@ export default function Admin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'youtubeLink', value: youtubeLink })
+      });
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'eventDate', value: eventDate })
+      });
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'eventLocation', value: eventLocation })
       });
       alert('Settings saved successfully!');
     } catch (err) {
@@ -883,6 +897,32 @@ export default function Admin() {
                       />
                     </div>
 
+                    <div className="space-y-4">
+                      <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
+                        Event Date
+                      </label>
+                      <input 
+                        type="text" 
+                        value={eventDate}
+                        onChange={e => setEventDate(e.target.value)}
+                        className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-xl font-tech"
+                        placeholder="e.g. To Be Announced (2026)"
+                      />
+                    </div>
+
+                    <div className="space-y-4">
+                      <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
+                        Event Location
+                      </label>
+                      <input 
+                        type="text" 
+                        value={eventLocation}
+                        onChange={e => setEventLocation(e.target.value)}
+                        className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors text-xl font-tech"
+                        placeholder="e.g. Royal MAS Arena, Colombo"
+                      />
+                    </div>
+
                     <div className="pt-6 border-t-2 border-[#333] flex items-center justify-between">
                       <div>
                         <h3 className="text-lg font-tech italic uppercase font-bold text-white mb-1">Reveal Status</h3>
@@ -916,15 +956,19 @@ export default function Admin() {
 
         {/* Team Details Modal */}
         {selectedTeam && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm">
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm cursor-pointer"
+            onClick={() => setSelectedTeam(null)}
+          >
             <motion.div 
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-[#0A0A0A] border-4 border-[#E427F5] w-full max-w-2xl overflow-hidden relative"
+              className="bg-[#0A0A0A] border-4 border-[#E427F5] w-full max-w-2xl overflow-hidden relative cursor-default"
+              onClick={(e) => e.stopPropagation()}
             >
               <button 
                 onClick={() => setSelectedTeam(null)}
-                className="absolute top-4 right-4 text-white/60 hover:text-white transition-colors"
+                className="absolute top-4 right-4 text-white/60 hover:text-[#E427F5] transition-colors z-[110]"
               >
                 <XCircle className="w-8 h-8" />
               </button>
@@ -974,7 +1018,7 @@ export default function Admin() {
                   </div>
                 </div>
 
-                <div className="mt-12 pt-8 border-t border-[#333] flex flex-wrap gap-4">
+                <div className="mt-12 pt-8 border-t border-[#333] flex flex-wrap gap-4 items-end">
                   <div className="flex-1">
                     <label className="text-xs font-tech uppercase italic text-white/40 block mb-1">Registration Date</label>
                     <p className="text-sm text-white/60">{new Date(selectedTeam.createdAt).toLocaleString()}</p>
@@ -985,6 +1029,12 @@ export default function Admin() {
                       {selectedTeam.status} {selectedTeam.participated && '(Participated)'}
                     </p>
                   </div>
+                  <button 
+                    onClick={() => setSelectedTeam(null)}
+                    className="bg-[#333] text-white font-tech uppercase italic font-bold px-6 py-2 hover:bg-[#E427F5] hover:text-black transition-colors transform -skew-x-12"
+                  >
+                    <span className="block transform skew-x-12">Close</span>
+                  </button>
                 </div>
               </div>
             </motion.div>

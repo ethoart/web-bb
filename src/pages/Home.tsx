@@ -16,6 +16,8 @@ export default function Home() {
   const [facebookLink, setFacebookLink] = useState('https://www.facebook.com/profile.php?id=61573020699132');
   const [instagramLink, setInstagramLink] = useState('#');
   const [youtubeLink, setYoutubeLink] = useState('#');
+  const [eventDate, setEventDate] = useState('To Be Announced (2026)');
+  const [eventLocation, setEventLocation] = useState('Royal MAS Arena, Colombo');
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
 
   useEffect(() => {
@@ -29,6 +31,8 @@ export default function Home() {
         if (data.facebookLink) setFacebookLink(data.facebookLink);
         if (data.instagramLink) setInstagramLink(data.instagramLink);
         if (data.youtubeLink) setYoutubeLink(data.youtubeLink);
+        if (data.eventDate) setEventDate(data.eventDate);
+        if (data.eventLocation) setEventLocation(data.eventLocation);
       })
       .catch(console.error);
 
@@ -166,14 +170,14 @@ export default function Home() {
                   <Calendar className="w-8 h-8 text-[#E427F5]" />
                   <div>
                     <h4 className="font-tech text-2xl uppercase font-bold italic">Date</h4>
-                    <p className="text-gray-400">To Be Announced (2026)</p>
+                    <p className="text-gray-400">{eventDate}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-4 border-l-4 border-[#E427F5] pl-4">
                   <MapPin className="w-8 h-8 text-[#E427F5]" />
                   <div>
                     <h4 className="font-tech text-2xl uppercase font-bold italic">Location</h4>
-                    <p className="text-gray-400">Royal MAS Arena, Colombo</p>
+                    <p className="text-gray-400">{eventLocation}</p>
                   </div>
                 </div>
               </div>
