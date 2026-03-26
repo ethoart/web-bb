@@ -1052,8 +1052,8 @@ export default function Admin() {
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-4">
                         {sponsors.map((url, idx) => (
-                          <div key={idx} className="relative group bg-[#111] border-2 border-[#333] p-2">
-                            <img src={url} alt={`Sponsor ${idx}`} className="h-12 w-full object-contain" />
+                          <div key={idx} className="relative group bg-[#111] border-2 border-[#333] p-4">
+                            <img src={url} alt={`Sponsor ${idx}`} className="h-32 w-full object-contain" />
                             <button
                               onClick={() => setSponsors(prev => prev.filter((_, i) => i !== idx))}
                               className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
