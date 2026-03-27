@@ -28,12 +28,15 @@ export default function Admin() {
   const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
   const [sponsorLogoSize, setSponsorLogoSize] = useState('20');
   const [termsAndConditions, setTermsAndConditions] = useState('');
+  const [sendTcPdf, setSendTcPdf] = useState(true);
+  const [requireTcPopup, setRequireTcPopup] = useState(true);
   const [savingSettings, setSavingSettings] = useState(false);
 
   // Mail State
   const [mailSubject, setMailSubject] = useState('');
   const [mailBody, setMailBody] = useState('');
   const [mailTarget, setMailTarget] = useState('all');
+  const [mailAttachment, setMailAttachment] = useState<File | null>(null);
   const [sendingMail, setSendingMail] = useState(false);
 
   // Scanner State
@@ -236,6 +239,12 @@ export default function Admin() {
       if (setData.termsAndConditions) {
         setTermsAndConditions(setData.termsAndConditions);
       }
+      if (setData.sendTcPdf !== undefined) {
+        setSendTcPdf(setData.sendTcPdf);
+      }
+      if (setData.requireTcPopup !== undefined) {
+        setRequireTcPopup(setData.requireTcPopup);
+      }
 
       const galRes = await fetch('/api/gallery');
       const galData = await galRes.json();
@@ -295,15 +304,23 @@ export default function Admin() {
     e.preventDefault();
     setSendingMail(true);
     try {
+      const formData = new FormData();
+      formData.append('target', mailTarget);
+      formData.append('subject', mailSubject);
+      formData.append('text', mailBody);
+      if (mailAttachment) {
+        formData.append('attachment', mailAttachment);
+      }
+
       const res = await fetch('/api/admin/mail', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ target: mailTarget, subject: mailSubject, text: mailBody })
+        body: formData
       });
       if (res.ok) {
         alert('Mail sent successfully!');
         setMailSubject('');
         setMailBody('');
+        setMailAttachment(null);
       } else {
         alert('Failed to send mail.');
       }
@@ -382,6 +399,16 @@ export default function Admin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'termsAndConditions', value: termsAndConditions })
+      });
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'sendTcPdf', value: sendTcPdf })
+      });
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'requireTcPopup', value: requireTcPopup })
       });
       localStorage.setItem('logoSize', logoSize);
       alert('Settings saved successfully!');
@@ -892,6 +919,19 @@ export default function Admin() {
                           placeholder="Write your message here..."
                         />
                       </div>
+                      <div className="space-y-2">
+                        <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Attachment (Optional)</label>
+                        <input 
+                          type="file" 
+                          onChange={e => setMailAttachment(e.target.files?.[0] || null)}
+                          className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:text-sm file:font-tech file:uppercase file:italic file:font-bold file:bg-[#E427F5] file:text-black hover:file:bg-white transition-all"
+                        />
+                        {mailAttachment && (
+                          <p className="text-sm text-[#E427F5] mt-2 flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4" /> Attached: {mailAttachment.name}
+                          </p>
+                        )}
+                      </div>
                       <button 
                         type="submit"
                         disabled={sendingMail}
@@ -1266,6 +1306,28 @@ export default function Admin() {
                         placeholder="Enter terms and conditions for registration..."
                       />
                       <p className="text-xs text-white/40 font-tech uppercase italic">This text will be shown to users before they complete their registration.</p>
+                      
+                      <div className="flex flex-col gap-4 mt-4 pt-4 border-t border-[#333]">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={requireTcPopup}
+                            onChange={(e) => setRequireTcPopup(e.target.checked)}
+                            className="w-5 h-5 accent-[#E427F5] bg-[#111] border-[#333]"
+                          />
+                          <span className="font-tech text-lg text-white uppercase italic">Require T&C Agreement Popup on Registration</span>
+                        </label>
+                        
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input 
+                            type="checkbox" 
+                            checked={sendTcPdf}
+                            onChange={(e) => setSendTcPdf(e.target.checked)}
+                            className="w-5 h-5 accent-[#E427F5] bg-[#111] border-[#333]"
+                          />
+                          <span className="font-tech text-lg text-white uppercase italic">Send T&C PDF in Approval Email</span>
+                        </label>
+                      </div>
                     </div>
 
                     <div className="pt-6 border-t-2 border-[#333] flex items-center justify-between">

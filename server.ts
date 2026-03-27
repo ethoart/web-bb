@@ -291,7 +291,9 @@ let mockSettings: any = {
   eventDate: 'To Be Announced (2026)',
   eventLocation: 'Royal MAS Arena, Colombo',
   logoSize: '14',
-  termsAndConditions: 'By registering for BOT BASH, you agree to follow all safety protocols and competition rules. Robots must be inspected before the match. The organizers are not responsible for any damage to your robot during the competition.'
+  termsAndConditions: 'By registering for BOT BASH, you agree to follow all safety protocols and competition rules. Robots must be inspected before the match. The organizers are not responsible for any damage to your robot during the competition.',
+  sendTcPdf: true,
+  requireTcPopup: true
 };
 
 // API Routes
@@ -757,14 +759,17 @@ app.put('/api/admin/registrations/:id/status', async (req, res) => {
 
         if (status === 'approved') {
           let termsText = mockSettings.termsAndConditions;
+          let sendTcPdf = mockSettings.sendTcPdf !== false; // default true
           if (isDbConnected) {
             const settingsDoc = await Settings.findOne({ key: 'termsAndConditions' });
             if (settingsDoc && settingsDoc.value) {
               termsText = settingsDoc.value;
             }
+            const sendTcPdfDoc = await Settings.findOne({ key: 'sendTcPdf' });
+            if (sendTcPdfDoc && sendTcPdfDoc.value !== undefined) {
+              sendTcPdf = sendTcPdfDoc.value;
+            }
           }
-
-          const pdfBuffer = await generateTermsPDF(user.teamName, user.captainName, termsText);
 
           htmlContent += `
             <div class="pass-card">
@@ -781,7 +786,7 @@ app.put('/api/admin/registrations/:id/status', async (req, res) => {
                 <p>Robot: <strong>${user.robotName}</strong></p>
               </div>
             </div>
-            <p>Congratulations! Attached is your QR Code pass for the event and the Terms and Conditions PDF you agreed to. Please present this pass at the entrance.</p>
+            <p>Congratulations! Attached is your QR Code pass for the event${sendTcPdf ? ' and the Terms and Conditions PDF you agreed to' : ''}. Please present this pass at the entrance.</p>
           `;
           
           mailOptions.attachments = [
@@ -790,13 +795,17 @@ app.put('/api/admin/registrations/:id/status', async (req, res) => {
               content: user.qrCode.split("base64,")[1],
               encoding: 'base64',
               cid: 'qrcode'
-            },
-            {
+            }
+          ];
+
+          if (sendTcPdf) {
+            const pdfBuffer = await generateTermsPDF(user.teamName, user.captainName, termsText);
+            mailOptions.attachments.push({
               filename: 'BotBash_Terms_And_Conditions.pdf',
               content: pdfBuffer,
               contentType: 'application/pdf'
-            }
-          ];
+            });
+          }
         } else if (status === 'rejected') {
           htmlContent += `<p>Unfortunately, your application was not approved at this time. Thank you for your interest in Bot Bash.</p>`;
         }
@@ -886,7 +895,7 @@ app.post('/api/admin/scan', async (req, res) => {
   }
 });
 
-app.post('/api/admin/mail', async (req, res) => {
+app.post('/api/admin/mail', upload.single('attachment'), async (req, res) => {
   try {
     const { subject, message, target } = req.body; // target could be 'all', 'approved', 'pending'
     
@@ -905,12 +914,30 @@ app.post('/api/admin/mail', async (req, res) => {
         // Convert plain text message to simple HTML paragraphs
         const formattedMessage = (req.body.text || message || '').split('\n').map((line: string) => `<p>${line}</p>`).join('');
         
-        await transporter.sendMail({
+        const mailOptions: any = {
           from: `"Bot Bash" <${fromEmail}>`,
           bcc: emails,
           subject: subject,
           html: getEmailTemplate(subject, formattedMessage)
-        });
+        };
+
+        if (req.file) {
+          mailOptions.attachments = [
+            {
+              filename: req.file.originalname,
+              path: req.file.path
+            }
+          ];
+        }
+
+        await transporter.sendMail(mailOptions);
+        
+        // Clean up uploaded file after sending
+        if (req.file) {
+          fs.unlink(req.file.path, (err) => {
+            if (err) console.error('Failed to delete temp attachment file', err);
+          });
+        }
       }
     } else {
       console.log('Mock email sent to:', users.length, 'users');

@@ -27,6 +27,7 @@ export default function Home() {
   const [logoSize, setLogoSize] = useState(() => localStorage.getItem('logoSize') || '14');
   const [sponsorLogoSize, setSponsorLogoSize] = useState('20');
   const [termsAndConditions, setTermsAndConditions] = useState('');
+  const [requireTcPopup, setRequireTcPopup] = useState(true);
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
@@ -64,6 +65,9 @@ export default function Home() {
           }
           if (data.termsAndConditions) {
             setTermsAndConditions(data.termsAndConditions);
+          }
+          if (data.requireTcPopup !== undefined) {
+            setRequireTcPopup(data.requireTcPopup);
           }
         }
 
@@ -132,7 +136,11 @@ export default function Home() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setShowTermsModal(true);
+    if (requireTcPopup) {
+      setShowTermsModal(true);
+    } else {
+      confirmRegistration();
+    }
   };
 
   const confirmRegistration = async () => {
