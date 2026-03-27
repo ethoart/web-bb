@@ -41,6 +41,8 @@ export default function Admin() {
   const [scannedUser, setScannedUser] = useState<any>(null);
   const [scanStatus, setScanStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isScannerStarted, setIsScannerStarted] = useState(false);
+  const isProcessingScan = React.useRef(false);
+  const [scanErrorMessage, setScanErrorMessage] = useState<string>('');
 
   // Modal State
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
@@ -108,8 +110,14 @@ export default function Admin() {
   }, [activeTab, isScannerStarted]);
 
   const onScanSuccess = async (decodedText: string) => {
+    if (isProcessingScan.current) return;
+    isProcessingScan.current = true;
+    
     setScanResult(decodedText);
     setScannedUser(null);
+    setScanStatus('idle');
+    setScanErrorMessage('');
+    
     try {
       // The QR code contains JSON data like {"id":"...","team":"..."}
       let parsedData;
@@ -132,10 +140,21 @@ export default function Admin() {
         fetchData(); // Refresh data to show participated status
       } else {
         setScanStatus('error');
+        setScanErrorMessage(data.error || 'Invalid QR or Not Approved');
       }
     } catch (err) {
       setScanStatus('error');
+      setScanErrorMessage('Network error occurred');
     }
+
+    // Reset scanner after 3.5 seconds to allow reading the message
+    setTimeout(() => {
+      setScanResult(null);
+      setScannedUser(null);
+      setScanStatus('idle');
+      setScanErrorMessage('');
+      isProcessingScan.current = false;
+    }, 3500);
   };
 
   const onScanFailure = (error: any) => {
@@ -792,8 +811,9 @@ export default function Admin() {
                         <p className="font-sans normal-case text-sm break-all text-white">{scanResult}</p>
                         {scanStatus === 'success' && scannedUser && (
                           <div className="mt-4 border-t border-green-500/30 pt-4">
-                            <p className="font-bold tracking-widest text-xl">✓ Participant Checked In!</p>
-                            <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
+                            <p className="font-bold tracking-widest text-xl">✓ Welcome, {scannedUser.teamName}!</p>
+                            <p className="text-green-400 mt-1">Successfully checked in.</p>
+                            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
                               <div>
                                 <span className="text-white/40">Team:</span>
                                 <div className="text-white">{scannedUser.teamName}</div>
@@ -805,7 +825,7 @@ export default function Admin() {
                             </div>
                           </div>
                         )}
-                        {scanStatus === 'error' && <p className="mt-2 font-bold tracking-widest">✗ Invalid QR or Not Approved</p>}
+                        {scanStatus === 'error' && <p className="mt-2 font-bold tracking-widest">✗ {scanErrorMessage || 'Invalid QR or Not Approved'}</p>}
                       </div>
                     )}
                   </div>

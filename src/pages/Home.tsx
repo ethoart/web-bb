@@ -493,6 +493,7 @@ export default function Home() {
                       src={img.url} 
                       alt="Gallery Image"
                       loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover transition-all duration-500 hover:scale-110"
                       referrerPolicy="no-referrer"
                     />
@@ -514,6 +515,7 @@ export default function Home() {
                     src={`https://picsum.photos/seed/botbash${i}/800/600`} 
                     alt={`Bot Bash 2025 Memory ${i}`}
                     loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-cover transition-all duration-500 hover:scale-110"
                     referrerPolicy="no-referrer"
                   />
@@ -590,6 +592,8 @@ export default function Home() {
                 <img 
                   src={selectedMedia.url} 
                   alt="Gallery Full" 
+                  loading="lazy"
+                  decoding="async"
                   className="max-w-full max-h-[80vh] object-contain border-2 border-[#E427F5] shadow-[0_0_30px_rgba(228,39,245,0.3)]"
                   referrerPolicy="no-referrer"
                 />
@@ -608,10 +612,16 @@ export default function Home() {
           <div className="flex flex-wrap justify-center items-center gap-12 md:gap-20">
             {sponsors.length > 0 ? (
               sponsors.map((url, idx) => (
-                <img 
+                <motion.img 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: idx * 0.1 }}
                   key={idx} 
                   src={url} 
                   alt={`Sponsor ${idx}`} 
+                  loading="lazy"
+                  decoding="async"
                   style={{ maxHeight: `${parseInt(sponsorLogoSize) * 4}px` }}
                   className="max-w-[250px] md:max-w-[350px] h-auto object-contain" 
                   referrerPolicy="no-referrer" 

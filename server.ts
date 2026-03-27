@@ -758,9 +758,9 @@ app.put('/api/admin/registrations/:id/status', async (req, res) => {
         if (status === 'approved') {
           let termsText = mockSettings.termsAndConditions;
           if (isDbConnected) {
-            const settings = await Settings.findOne();
-            if (settings && settings.termsAndConditions) {
-              termsText = settings.termsAndConditions;
+            const settingsDoc = await Settings.findOne({ key: 'termsAndConditions' });
+            if (settingsDoc && settingsDoc.value) {
+              termsText = settingsDoc.value;
             }
           }
 
@@ -828,6 +828,7 @@ app.post('/api/admin/scan', async (req, res) => {
 
     if (!user) return res.status(404).json({ error: 'User not found' });
     if (user.status !== 'approved') return res.status(400).json({ error: 'User is not approved' });
+    if (user.participated) return res.status(400).json({ error: 'Already scanned. This pass has already been used.' });
 
     user.participated = true;
 
