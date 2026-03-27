@@ -42,6 +42,7 @@ export default function Admin() {
   const [scanStatus, setScanStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [isScannerStarted, setIsScannerStarted] = useState(false);
   const isProcessingScan = React.useRef(false);
+  const lastScannedCode = React.useRef<string | null>(null);
   const [scanErrorMessage, setScanErrorMessage] = useState<string>('');
 
   // Modal State
@@ -111,7 +112,12 @@ export default function Admin() {
 
   const onScanSuccess = async (decodedText: string) => {
     if (isProcessingScan.current) return;
+    
+    // Ignore if it's the exact same QR code we just scanned
+    if (lastScannedCode.current === decodedText) return;
+
     isProcessingScan.current = true;
+    lastScannedCode.current = decodedText;
     
     setScanResult(decodedText);
     setScannedUser(null);
@@ -147,13 +153,21 @@ export default function Admin() {
       setScanErrorMessage('Network error occurred');
     }
 
-    // Reset scanner after 3.5 seconds to allow reading the message
+    // Reset scanner UI after 3.5 seconds to allow reading the message
     setTimeout(() => {
       setScanResult(null);
       setScannedUser(null);
       setScanStatus('idle');
       setScanErrorMessage('');
       isProcessingScan.current = false;
+      
+      // Clear the last scanned code memory after a longer delay (e.g., 10 seconds)
+      // This prevents rapid re-scanning of the same code if held in front of the camera
+      setTimeout(() => {
+        if (lastScannedCode.current === decodedText) {
+          lastScannedCode.current = null;
+        }
+      }, 10000);
     }, 3500);
   };
 
@@ -592,9 +606,9 @@ export default function Admin() {
             >
               {activeTab === 'registrations' && (
                 <div>
-                  <div className="flex justify-between items-center mb-8">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
                     <h2 className="text-3xl font-tech font-bold uppercase italic tracking-wider text-[#E427F5]">Team Registrations</h2>
-                    <div className="flex items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4">
                       <button 
                         onClick={() => fetchRegistrations(true)}
                         className="bg-[#E427F5] text-white px-4 py-2 border-2 border-[#E427F5] font-tech italic uppercase flex items-center gap-2 hover:bg-[#c21ecf] hover:border-[#c21ecf] transition-colors shadow-[0_0_15px_rgba(228,39,245,0.4)]"
@@ -602,9 +616,15 @@ export default function Admin() {
                         <RefreshCw className="w-5 h-5" />
                         <span className="hidden sm:inline">Refresh</span>
                       </button>
-                      <div className="bg-black px-4 py-2 border-2 border-[#333] font-tech italic uppercase">
-                        <span className="text-white/60 mr-2">Total Teams:</span>
-                        <span className="font-bold text-[#E427F5]">{registrations.length}</span>
+                      <div className="flex gap-2">
+                        <div className="bg-black px-4 py-2 border-2 border-[#333] font-tech italic uppercase flex items-center">
+                          <span className="text-white/60 mr-2">Total Teams:</span>
+                          <span className="font-bold text-[#E427F5]">{registrations.length}</span>
+                        </div>
+                        <div className="bg-black px-4 py-2 border-2 border-[#333] font-tech italic uppercase flex items-center">
+                          <span className="text-white/60 mr-2">Participated:</span>
+                          <span className="font-bold text-green-400">{registrations.filter(r => r.participated).length}</span>
+                        </div>
                       </div>
                     </div>
                   </div>

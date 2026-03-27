@@ -613,15 +613,14 @@ export default function Home() {
             {sponsors.length > 0 ? (
               sponsors.map((url, idx) => (
                 <motion.img 
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: idx * 0.1 }}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true, margin: "100px" }}
+                  transition={{ duration: 0.3 }}
                   key={idx} 
                   src={url} 
                   alt={`Sponsor ${idx}`} 
-                  loading="lazy"
-                  decoding="async"
+                  fetchPriority="high"
                   style={{ maxHeight: `${parseInt(sponsorLogoSize) * 4}px` }}
                   className="max-w-[250px] md:max-w-[350px] h-auto object-contain" 
                   referrerPolicy="no-referrer" 
