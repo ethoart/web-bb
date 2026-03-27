@@ -143,7 +143,7 @@ export default function Admin() {
       if (res.ok) {
         setScanStatus('success');
         setScannedUser(data.user);
-        fetchData(); // Refresh data to show participated status
+        fetchRegistrations(false); // Refresh data to show participated status without triggering global loading
       } else {
         setScanStatus('error');
         setScanErrorMessage(data.error || 'Invalid QR or Not Approved');
@@ -153,7 +153,7 @@ export default function Admin() {
       setScanErrorMessage('Network error occurred');
     }
 
-    // Reset scanner UI after 3.5 seconds to allow reading the message
+    // Reset scanner UI after 1.5 seconds to allow reading the message but scan faster
     setTimeout(() => {
       setScanResult(null);
       setScannedUser(null);
@@ -161,14 +161,14 @@ export default function Admin() {
       setScanErrorMessage('');
       isProcessingScan.current = false;
       
-      // Clear the last scanned code memory after a longer delay (e.g., 10 seconds)
+      // Clear the last scanned code memory after a longer delay (e.g., 5 seconds)
       // This prevents rapid re-scanning of the same code if held in front of the camera
       setTimeout(() => {
         if (lastScannedCode.current === decodedText) {
           lastScannedCode.current = null;
         }
-      }, 10000);
-    }, 3500);
+      }, 5000);
+    }, 1500);
   };
 
   const onScanFailure = (error: any) => {
@@ -827,10 +827,8 @@ export default function Admin() {
                     
                     {scanResult && (
                       <div className={`p-4 border-2 font-tech uppercase italic ${scanStatus === 'success' ? 'bg-green-500/20 border-green-500 text-green-400' : scanStatus === 'error' ? 'bg-red-500/20 border-red-500 text-red-400' : 'bg-[#111] border-[#333]'}`}>
-                        <h3 className="font-bold mb-1">Scan Result:</h3>
-                        <p className="font-sans normal-case text-sm break-all text-white">{scanResult}</p>
                         {scanStatus === 'success' && scannedUser && (
-                          <div className="mt-4 border-t border-green-500/30 pt-4">
+                          <div className="pt-2">
                             <p className="font-bold tracking-widest text-xl">✓ Welcome, {scannedUser.teamName}!</p>
                             <p className="text-green-400 mt-1">Successfully checked in.</p>
                             <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
@@ -845,7 +843,8 @@ export default function Admin() {
                             </div>
                           </div>
                         )}
-                        {scanStatus === 'error' && <p className="mt-2 font-bold tracking-widest">✗ {scanErrorMessage || 'Invalid QR or Not Approved'}</p>}
+                        {scanStatus === 'error' && <p className="font-bold tracking-widest text-xl">✗ {scanErrorMessage || 'Invalid QR or Not Approved'}</p>}
+                        {scanStatus === 'idle' && <p className="font-bold tracking-widest text-xl text-yellow-500">Processing...</p>}
                       </div>
                     )}
                   </div>

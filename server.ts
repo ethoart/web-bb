@@ -841,10 +841,32 @@ app.post('/api/admin/scan', async (req, res) => {
       try {
         const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER;
         const thankYouHtml = `
-          <p>Hello <strong>${user.captainName}</strong>,</p>
-          <p>Thank you for attending Bot Bash 2026 with your team <strong>${user.teamName}</strong>!</p>
-          <p>We hope you had an amazing experience. Stay tuned for results and future events!</p>
-          <p>Best regards,<br>The Bot Bash Team</p>
+          <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto; color: #333; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
+            <div style="background-color: #111; padding: 20px; text-align: center; border-bottom: 4px solid #E427F5;">
+              <h1 style="color: #E427F5; margin: 0; font-style: italic; text-transform: uppercase;">BOT BASH 2026</h1>
+            </div>
+            <div style="padding: 30px; background-color: #ffffff;">
+              <h2 style="color: #111; margin-top: 0;">Thank You for Attending!</h2>
+              <p>Hello <strong>${user.captainName}</strong>,</p>
+              <p>We are absolutely thrilled that you and your team, <strong>${user.teamName}</strong>, joined us for Bot Bash 2026! Your participation helped make this event a massive success.</p>
+              <p>It was incredible to see the innovation, engineering, and competitive spirit your team brought to the arena. We hope you enjoyed the battles, learned something new, and had a fantastic time connecting with fellow robotics enthusiasts.</p>
+              
+              <h3 style="color: #E427F5; margin-top: 25px;">What's Next?</h3>
+              <ul style="line-height: 1.6; padding-left: 20px;">
+                <li><strong>Event Photos & Videos:</strong> Keep an eye on our official gallery. We will be uploading high-quality photos and match highlights soon.</li>
+                <li><strong>Results & Rankings:</strong> The final tournament brackets and awards will be published on our website and social media channels.</li>
+                <li><strong>Feedback:</strong> We'd love to hear about your experience! Look out for a feedback survey in the coming days to help us make the next Bot Bash even better.</li>
+              </ul>
+              
+              <p style="margin-top: 30px;">Thank you once again for your dedication and passion for robotics. We can't wait to see what you build next year!</p>
+              
+              <p style="margin-top: 30px; margin-bottom: 0;">Best regards,</p>
+              <p style="font-weight: bold; margin-top: 5px;">The Bot Bash Organizing Committee</p>
+            </div>
+            <div style="background-color: #111; padding: 15px; text-align: center; color: #888; font-size: 12px;">
+              &copy; 2026 Bot Bash. All rights reserved.
+            </div>
+          </div>
         `;
 
         await transporter.sendMail({

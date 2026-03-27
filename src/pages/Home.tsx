@@ -30,40 +30,78 @@ export default function Home() {
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
+  const [isSiteLoading, setIsSiteLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/settings')
-      .then(res => res.json())
-      .then(data => {
-        if (data.prizePoolFirst) setPrizePool(prev => ({ ...prev, first: data.prizePoolFirst }));
-        if (data.isRevealed !== undefined) setIsRevealed(data.isRevealed);
-        if (data.bannerImage) setBannerImage(data.bannerImage);
-        if (data.sponsors !== undefined) {
-          setSponsors(Array.isArray(data.sponsors) ? data.sponsors : (typeof data.sponsors === 'string' ? data.sponsors.split(',') : []));
-        }
-        if (data.facebookLink) setFacebookLink(data.facebookLink);
-        if (data.instagramLink) setInstagramLink(data.instagramLink);
-        if (data.youtubeLink) setYoutubeLink(data.youtubeLink);
-        if (data.eventDate) setEventDate(data.eventDate);
-        if (data.eventLocation) setEventLocation(data.eventLocation);
-        if (data.bannerText) setBannerText(data.bannerText);
-        if (data.logoSize) {
-          setLogoSize(data.logoSize);
-          localStorage.setItem('logoSize', data.logoSize);
-        }
-        if (data.sponsorLogoSize) {
-          setSponsorLogoSize(data.sponsorLogoSize);
-        }
-        if (data.termsAndConditions) {
-          setTermsAndConditions(data.termsAndConditions);
-        }
-      })
-      .catch(console.error);
+    const loadDataAndImages = async () => {
+      try {
+        const [settingsRes, galleryRes] = await Promise.all([
+          fetch('/api/settings').catch(() => null),
+          fetch('/api/gallery').catch(() => null)
+        ]);
 
-    fetch('/api/gallery')
-      .then(res => res.json())
-      .then(data => setGalleryImages(data))
-      .catch(console.error);
+        let data: any = {};
+        if (settingsRes && settingsRes.ok) {
+          data = await settingsRes.json();
+          if (data.prizePoolFirst) setPrizePool(prev => ({ ...prev, first: data.prizePoolFirst }));
+          if (data.isRevealed !== undefined) setIsRevealed(data.isRevealed);
+          if (data.bannerImage) setBannerImage(data.bannerImage);
+          if (data.sponsors !== undefined) {
+            setSponsors(Array.isArray(data.sponsors) ? data.sponsors : (typeof data.sponsors === 'string' ? data.sponsors.split(',') : []));
+          }
+          if (data.facebookLink) setFacebookLink(data.facebookLink);
+          if (data.instagramLink) setInstagramLink(data.instagramLink);
+          if (data.youtubeLink) setYoutubeLink(data.youtubeLink);
+          if (data.eventDate) setEventDate(data.eventDate);
+          if (data.eventLocation) setEventLocation(data.eventLocation);
+          if (data.bannerText) setBannerText(data.bannerText);
+          if (data.logoSize) {
+            setLogoSize(data.logoSize);
+            localStorage.setItem('logoSize', data.logoSize);
+          }
+          if (data.sponsorLogoSize) {
+            setSponsorLogoSize(data.sponsorLogoSize);
+          }
+          if (data.termsAndConditions) {
+            setTermsAndConditions(data.termsAndConditions);
+          }
+        }
+
+        if (galleryRes && galleryRes.ok) {
+          const galleryData = await galleryRes.json();
+          setGalleryImages(galleryData);
+        }
+
+        // Preload critical images
+        const imagesToLoad = [];
+        if (data.bannerImage) imagesToLoad.push(data.bannerImage);
+        else imagesToLoad.push('https://github.com/ethoart/botbash-img/blob/main/Adobe%20Express%20-%20file.png?raw=true');
+        
+        if (data.sponsors) {
+          const sp = Array.isArray(data.sponsors) ? data.sponsors : (typeof data.sponsors === 'string' ? data.sponsors.split(',') : []);
+          imagesToLoad.push(...sp);
+        }
+
+        const imagePromises = imagesToLoad.map(src => {
+          return new Promise((resolve) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = resolve;
+            img.onerror = resolve; // resolve anyway so it doesn't block forever
+          });
+        });
+
+        // Add a minimum loading time of 800ms to prevent flashing
+        await Promise.all([...imagePromises, new Promise(r => setTimeout(r, 800))]);
+
+      } catch (err) {
+        console.error('Error loading site data:', err);
+      } finally {
+        setIsSiteLoading(false);
+      }
+    };
+
+    loadDataAndImages();
   }, []);
 
   // Registration State
@@ -122,6 +160,26 @@ export default function Home() {
   };
 
   const headerHeight = (parseInt(logoSize) * 4) + 24;
+
+  if (isSiteLoading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-4 border-[#E427F5] border-t-transparent rounded-full mb-8"
+        />
+        <motion.h1 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+          className="text-2xl font-tech italic uppercase text-[#E427F5] tracking-widest"
+        >
+          Loading Bot Bash...
+        </motion.h1>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen bg-[#0A0A0A] text-white overflow-x-hidden font-sans selection:bg-[#E427F5] selection:text-black">
