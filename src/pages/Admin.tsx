@@ -219,26 +219,6 @@ export default function Admin() {
     }
   };
 
-  const handlePdfUpload = async (file: File) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    try {
-      const res = await fetch('/api/admin/upload-file', {
-        method: 'POST',
-        body: formData
-      });
-      const data = await res.json();
-      if (data.url) {
-        setRulesPdfUrl(data.url);
-        setRulesPdfOriginalName(data.originalName || file.name);
-        alert('Rules PDF uploaded successfully! Please click Save Settings to apply.');
-      }
-    } catch (err) {
-      console.error('Error uploading PDF:', err);
-      alert('Failed to upload PDF');
-    }
-  };
-
   const fetchRegistrations = async (showLoading = false) => {
     if (showLoading) setLoading(true);
     try {
@@ -1405,26 +1385,6 @@ export default function Admin() {
                           />
                           <span className="font-tech text-lg text-white uppercase italic">Send T&C PDF in Approval Email</span>
                         </label>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4 pt-6 border-t-2 border-[#333]">
-                      <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
-                        Official Design Rules (Bot Creation Rules & Regulations)
-                      </label>
-                      <div className="flex flex-col gap-4">
-                        {rulesPdfUrl && (
-                          <div className="flex items-center gap-2 text-green-400 font-tech text-sm uppercase">
-                            <CheckCircle2 className="w-5 h-5" /> Current Document: {rulesPdfOriginalName || 'Uploaded'}
-                          </div>
-                        )}
-                        <input 
-                          type="file" 
-                          accept=".pdf"
-                          onChange={e => e.target.files?.[0] && handlePdfUpload(e.target.files[0])}
-                          className="w-full bg-[#111] border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-[#E427F5] transition-colors font-medium file:mr-4 file:py-2 file:px-4 file:rounded-none file:border-0 file:text-sm file:font-tech file:uppercase file:italic file:font-bold file:bg-[#E427F5] file:text-black hover:file:bg-white transition-all"
-                        />
-                        <p className="text-xs text-white/40 font-tech uppercase italic">This PDF will be available to download and automatically sent to registered users.</p>
                       </div>
                     </div>
 
