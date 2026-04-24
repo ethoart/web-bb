@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Gift, Trophy, Medal, Users, Calendar, MapPin, ChevronRight, CheckCircle2, AlertCircle, Search, ChevronDown, User, Camera, X } from 'lucide-react';
+import { Gift, Trophy, Medal, Users, Calendar, MapPin, ChevronRight, CheckCircle2, AlertCircle, Search, ChevronDown, User, Camera, X, Download } from 'lucide-react';
 import { countries } from 'countries-list';
 
 import Footer from '../components/Footer';
@@ -28,6 +28,8 @@ export default function Home() {
   const [sponsorLogoSize, setSponsorLogoSize] = useState('20');
   const [termsAndConditions, setTermsAndConditions] = useState('');
   const [requireTcPopup, setRequireTcPopup] = useState(true);
+  const [rulesPdfUrl, setRulesPdfUrl] = useState('');
+  const [rulesPdfOriginalName, setRulesPdfOriginalName] = useState('');
   const [showTermsModal, setShowTermsModal] = useState(false);
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<any | null>(null);
@@ -68,6 +70,12 @@ export default function Home() {
           }
           if (data.requireTcPopup !== undefined) {
             setRequireTcPopup(data.requireTcPopup);
+          }
+          if (data.rulesPdfUrl) {
+            setRulesPdfUrl(data.rulesPdfUrl);
+          }
+          if (data.rulesPdfOriginalName) {
+            setRulesPdfOriginalName(data.rulesPdfOriginalName);
           }
         }
 
@@ -319,6 +327,22 @@ export default function Home() {
                   </div>
                 </div>
               </div>
+
+              {rulesPdfUrl && (
+                <div className="mt-10">
+                  <a 
+                    href={rulesPdfUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-3 bg-red-600 text-white font-tech text-lg uppercase italic font-bold px-6 py-4 hover:bg-white hover:text-red-600 transition-colors transform -skew-x-12"
+                  >
+                    <span className="block transform skew-x-12 flex items-center gap-2">
+                      <Download className="w-5 h-5" /> Download Official Design Rules
+                    </span>
+                  </a>
+                  <p className="text-sm text-gray-500 mt-3 font-medium">*{rulesPdfOriginalName || 'Bot_Creation_Rules_and_Regulations.pdf'}</p>
+                </div>
+              )}
             </div>
 
             {/* Right Side: Form */}

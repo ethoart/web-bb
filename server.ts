@@ -293,7 +293,9 @@ let mockSettings: any = {
   logoSize: '14',
   termsAndConditions: 'By registering for BOT BASH, you agree to follow all safety protocols and competition rules. Robots must be inspected before the match. The organizers are not responsible for any damage to your robot during the competition.',
   sendTcPdf: true,
-  requireTcPopup: true
+  requireTcPopup: true,
+  rulesPdfUrl: '',
+  rulesPdfOriginalName: ''
 };
 
 // API Routes
@@ -302,6 +304,16 @@ app.post('/api/admin/upload', upload.single('image'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
     const url = `/uploads/${req.file.filename}`;
     res.json({ success: true, url });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/upload-file', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ success: true, url, originalName: req.file.originalname });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }
@@ -464,18 +476,45 @@ app.post('/api/register', async (req, res) => {
 
       // Send User Confirmation
       try {
-        const userHtml = `
+        let userHtml = `
           <p>Hello <strong>${req.body.captainName}</strong>,</p>
           <p>Thank you for registering your team <strong>${req.body.teamName}</strong> for Bot Bash 2026!</p>
           <p>Our team will review your application shortly. You will receive another email once your status has been updated.</p>
           <p>Best regards,<br>The Bot Bash Team</p>
         `;
 
+        let rulesPdfUrl = mockSettings.rulesPdfUrl;
+        let rulesPdfOriginalName = mockSettings.rulesPdfOriginalName || 'BotBash_Official_Design_Rules.pdf';
+        if (isDbConnected) {
+          const rulesDoc = await Settings.findOne({ key: 'rulesPdfUrl' });
+          if (rulesDoc) rulesPdfUrl = rulesDoc.value;
+          const nameDoc = await Settings.findOne({ key: 'rulesPdfOriginalName' });
+          if (nameDoc) rulesPdfOriginalName = nameDoc.value;
+        }
+
+        const attachments = [];
+        if (rulesPdfUrl) {
+          try {
+            const fileName = rulesPdfUrl.split('/').pop();
+            if (fileName) {
+              const filePath = path.join(uploadDir, fileName);
+              if (fs.existsSync(filePath)) {
+                attachments.push({
+                  filename: rulesPdfOriginalName,
+                  path: filePath
+                });
+                userHtml += '<p><strong>Attached are the Official Design Rules and Regulations for Bot Creation.</strong></p>';
+              }
+            }
+          } catch(err) { console.error('Failed to attach rules PDF', err); }
+        }
+
         await transporter.sendMail({
           from: `"Bot Bash" <${fromEmail}>`,
           to: req.body.email,
           subject: `Registration Received: ${req.body.teamName}`,
-          html: getEmailTemplate(`Registration Received`, userHtml)
+          html: getEmailTemplate(`Registration Received`, userHtml),
+          attachments
         });
       } catch (e) {
         console.error('Failed to send user confirmation email', e);
