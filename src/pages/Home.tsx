@@ -71,6 +71,9 @@ export default function Home() {
           if (data.requireTcPopup !== undefined) {
             setRequireTcPopup(data.requireTcPopup);
           }
+          if (data.requireTcPopup !== undefined) {
+            setRequireTcPopup(data.requireTcPopup);
+          }
           if (data.rulesPdfUrl) {
             setRulesPdfUrl(data.rulesPdfUrl);
           }
@@ -176,6 +179,26 @@ export default function Home() {
   };
 
   const headerHeight = (parseInt(logoSize) * 4) + 24;
+
+  if (isSiteLoading) {
+    return (
+      <div className="min-h-screen bg-[#0A0A0A] flex flex-col items-center justify-center">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+          className="w-16 h-16 border-4 border-[#E427F5] border-t-transparent rounded-full mb-8"
+        />
+        <motion.h1 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, repeat: Infinity, repeatType: "reverse" }}
+          className="text-2xl font-tech italic uppercase text-[#E427F5] tracking-widest"
+        >
+          Loading Bot Bash...
+        </motion.h1>
+      </div>
+    );
+  }
 
   if (isSiteLoading) {
     return (

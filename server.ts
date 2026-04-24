@@ -319,6 +319,16 @@ app.post('/api/admin/upload-file', upload.single('file'), async (req, res) => {
   }
 });
 
+app.post('/api/admin/upload-file', upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/uploads/${req.file.filename}`;
+    res.json({ success: true, url, originalName: req.file.originalname });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.get('/api/gallery', async (req, res) => {
   try {
     if (isDbConnected) {
