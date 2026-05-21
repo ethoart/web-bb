@@ -1,0 +1,101 @@
+367:  const handleSaveSettings = async () => {
+368-    setSavingSettings(true);
+369-    try {
+370-      await fetch('/api/admin/settings', {
+371-        method: 'POST',
+372-        headers: { 'Content-Type': 'application/json' },
+373-        body: JSON.stringify({ key: 'prizePoolFirst', value: prizePoolFirst })
+374-      });
+375-      await fetch('/api/admin/settings', {
+376-        method: 'POST',
+377-        headers: { 'Content-Type': 'application/json' },
+378-        body: JSON.stringify({ key: 'isRevealed', value: isRevealed })
+379-      });
+380-      await fetch('/api/admin/settings', {
+381-        method: 'POST',
+382-        headers: { 'Content-Type': 'application/json' },
+383-        body: JSON.stringify({ key: 'bannerImage', value: bannerImage })
+384-      });
+385-      await fetch('/api/admin/settings', {
+386-        method: 'POST',
+387-        headers: { 'Content-Type': 'application/json' },
+388-        body: JSON.stringify({ key: 'sponsors', value: sponsors })
+389-      });
+390-      await fetch('/api/admin/settings', {
+391-        method: 'POST',
+392-        headers: { 'Content-Type': 'application/json' },
+393-        body: JSON.stringify({ key: 'facebookLink', value: facebookLink })
+394-      });
+395-      await fetch('/api/admin/settings', {
+396-        method: 'POST',
+397-        headers: { 'Content-Type': 'application/json' },
+398-        body: JSON.stringify({ key: 'instagramLink', value: instagramLink })
+399-      });
+400-      await fetch('/api/admin/settings', {
+401-        method: 'POST',
+402-        headers: { 'Content-Type': 'application/json' },
+403-        body: JSON.stringify({ key: 'youtubeLink', value: youtubeLink })
+404-      });
+405-      await fetch('/api/admin/settings', {
+406-        method: 'POST',
+407-        headers: { 'Content-Type': 'application/json' },
+408-        body: JSON.stringify({ key: 'eventDate', value: eventDate })
+409-      });
+410-      await fetch('/api/admin/settings', {
+411-        method: 'POST',
+412-        headers: { 'Content-Type': 'application/json' },
+413-        body: JSON.stringify({ key: 'eventLocation', value: eventLocation })
+414-      });
+415-      await fetch('/api/admin/settings', {
+416-        method: 'POST',
+417-        headers: { 'Content-Type': 'application/json' },
+418-        body: JSON.stringify({ key: 'bannerText', value: bannerText })
+419-      });
+420-      await fetch('/api/admin/settings', {
+421-        method: 'POST',
+422-        headers: { 'Content-Type': 'application/json' },
+423-        body: JSON.stringify({ key: 'logoSize', value: logoSize })
+424-      });
+425-      await fetch('/api/admin/settings', {
+426-        method: 'POST',
+427-        headers: { 'Content-Type': 'application/json' },
+428-        body: JSON.stringify({ key: 'sponsorLogoSize', value: sponsorLogoSize })
+429-      });
+430-      await fetch('/api/admin/settings', {
+431-        method: 'POST',
+432-        headers: { 'Content-Type': 'application/json' },
+433-        body: JSON.stringify({ key: 'termsAndConditions', value: termsAndConditions })
+434-      });
+435-      await fetch('/api/admin/settings', {
+436-        method: 'POST',
+437-        headers: { 'Content-Type': 'application/json' },
+438-        body: JSON.stringify({ key: 'sendTcPdf', value: sendTcPdf })
+439-      });
+440-      await fetch('/api/admin/settings', {
+441-        method: 'POST',
+442-        headers: { 'Content-Type': 'application/json' },
+443-        body: JSON.stringify({ key: 'requireTcPopup', value: requireTcPopup })
+444-      });
+445-      await fetch('/api/admin/settings', {
+446-        method: 'POST',
+447-        headers: { 'Content-Type': 'application/json' },
+448-        body: JSON.stringify({ key: 'rulesPdfUrl', value: rulesPdfUrl })
+449-      });
+450-      await fetch('/api/admin/settings', {
+451-        method: 'POST',
+452-        headers: { 'Content-Type': 'application/json' },
+453-        body: JSON.stringify({ key: 'rulesPdfOriginalName', value: rulesPdfOriginalName })
+454-      });
+455-      await fetch('/api/admin/settings', {
+456-        method: 'POST',
+457-        headers: { 'Content-Type': 'application/json' },
+458-        body: JSON.stringify({ key: 'sendTcPdf', value: sendTcPdf })
+459-      });
+460-      await fetch('/api/admin/settings', {
+461-        method: 'POST',
+462-        headers: { 'Content-Type': 'application/json' },
+463-        body: JSON.stringify({ key: 'requireTcPopup', value: requireTcPopup })
+464-      });
+465-      await fetch('/api/admin/settings', {
+466-        method: 'POST',
+467-        headers: { 'Content-Type': 'application/json' },

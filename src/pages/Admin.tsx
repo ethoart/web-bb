@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link as LinkIcon, Upload, Trash2, Camera, Info } from 'lucide-react';
+import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link as LinkIcon, Upload, Trash2, Camera, Info, AlertCircle } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
 import SEO from '../components/SEO';
 
@@ -30,6 +30,7 @@ export default function Admin() {
   const [termsAndConditions, setTermsAndConditions] = useState('');
   const [sendTcPdf, setSendTcPdf] = useState(true);
   const [requireTcPopup, setRequireTcPopup] = useState(true);
+  const [registrationOpen, setRegistrationOpen] = useState(true);
   const [rulesPdfUrl, setRulesPdfUrl] = useState('');
   const [rulesPdfOriginalName, setRulesPdfOriginalName] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
@@ -267,6 +268,9 @@ export default function Admin() {
       if (setData.requireTcPopup !== undefined) {
         setRequireTcPopup(setData.requireTcPopup);
       }
+      if (setData.registrationOpen !== undefined) {
+        setRegistrationOpen(setData.registrationOpen);
+      }
       if (setData.rulesPdfUrl) {
         setRulesPdfUrl(setData.rulesPdfUrl);
       }
@@ -313,6 +317,25 @@ export default function Admin() {
       }
     } catch (err) {
       console.error('Error updating robot status:', err);
+    }
+  };
+
+  const handlePhysicalTestStatusChange = async (id: string, status: string) => {
+    try {
+      const res = await fetch(`/api/admin/registrations/${id}/physical-test`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRegistrations(prev => prev.map(r => r._id === id ? data.user : r));
+        if (selectedTeam && selectedTeam._id === id) {
+          setSelectedTeam(data.user);
+        }
+      }
+    } catch (err) {
+      console.error('Error updating physical test status:', err);
     }
   };
 
@@ -467,6 +490,11 @@ export default function Admin() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: 'rulesPdfOriginalName', value: rulesPdfOriginalName })
+      });
+      await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key: 'registrationOpen', value: registrationOpen })
       });
       localStorage.setItem('logoSize', logoSize);
       alert('Settings saved successfully!');
@@ -1410,6 +1438,19 @@ export default function Admin() {
 
                     <div className="pt-6 border-t-2 border-[#333] flex items-center justify-between">
                       <div>
+                        <h3 className="text-lg font-tech italic uppercase font-bold text-white mb-1">Registration Status</h3>
+                        <p className="text-sm text-white/50">Toggle whether new teams can register for the event.</p>
+                      </div>
+                      <button
+                        onClick={() => setRegistrationOpen(!registrationOpen)}
+                        className={`flex items-center gap-2 px-6 py-3 font-tech font-bold uppercase italic tracking-widest transition-colors border-2 ${registrationOpen ? 'bg-green-500/20 text-green-400 border-green-500' : 'bg-red-500/20 text-red-400 border-red-500'}`}
+                      >
+                        {registrationOpen ? <><CheckCircle2 className="w-5 h-5" /> Open</> : <><AlertCircle className="w-5 h-5" /> Closed</>}
+                      </button>
+                    </div>
+
+                    <div className="pt-6 border-t-2 border-[#333] flex items-center justify-between">
+                      <div>
                         <h3 className="text-lg font-tech italic uppercase font-bold text-white mb-1">Reveal Status</h3>
                         <p className="text-sm text-white/50">Toggle whether the prize pool is visible to the public.</p>
                       </div>
@@ -1550,7 +1591,41 @@ export default function Admin() {
                           </span>
                         </div>
                       </div>
-                      <div className="flex gap-2 pt-2">
+                      
+                      <div className="pt-2 border-t border-[#333]">
+                        <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Physical Test Status</label>
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className={`px-3 py-1 text-[10px] font-tech uppercase italic font-bold ${
+                            selectedTeam.physicalTestStatus === 'passed' ? 'bg-green-500/20 text-green-400 border border-green-500' :
+                            selectedTeam.physicalTestStatus === 'failed' ? 'bg-red-500/20 text-red-400 border border-red-500' :
+                            'bg-gray-500/20 text-gray-400 border border-gray-500'
+                          }`}>
+                            {selectedTeam.physicalTestStatus || 'untested'}
+                          </span>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handlePhysicalTestStatusChange(selectedTeam._id, 'passed')}
+                            className="flex-1 border border-[#22C55E] text-[#22C55E] font-tech uppercase italic font-bold py-1.5 text-[10px] hover:bg-[#22C55E] hover:text-black transition-colors"
+                          >
+                            Pass Test
+                          </button>
+                          <button
+                            onClick={() => handlePhysicalTestStatusChange(selectedTeam._id, 'failed')}
+                            className="flex-1 border border-red-500 text-red-500 font-tech uppercase italic font-bold py-1.5 text-[10px] hover:bg-red-500 hover:text-black transition-colors"
+                          >
+                            Fail Test
+                          </button>
+                          <button
+                            onClick={() => handlePhysicalTestStatusChange(selectedTeam._id, 'untested')}
+                            className="flex-1 border border-gray-500 text-gray-400 font-tech uppercase italic font-bold py-1.5 text-[10px] hover:bg-gray-500 hover:text-white transition-colors"
+                          >
+                            Reset
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 pt-4 border-t border-[#333]">
                         <button
                           onClick={() => handleRobotStatusChange(selectedTeam._id, 'approved')}
                           className="flex-1 bg-[#22C55E] text-black font-tech uppercase italic font-bold py-2 text-[10px] md:text-sm hover:bg-white transition-colors"

@@ -254,6 +254,7 @@ const RegistrationSchema = new mongoose.Schema({
   robotAdditionalInfo: String,
   robotImage: String,
   robotStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
+  physicalTestStatus: { type: String, enum: ['untested', 'passed', 'failed'], default: 'untested' },
   participated: { type: Boolean, default: false },
   qrCode: String,
   resetCode: String,
@@ -295,7 +296,8 @@ let mockSettings: any = {
   sendTcPdf: true,
   requireTcPopup: true,
   rulesPdfUrl: '',
-  rulesPdfOriginalName: ''
+  rulesPdfOriginalName: '',
+  registrationOpen: true
 };
 
 // API Routes
@@ -430,6 +432,18 @@ app.delete('/api/admin/registrations/:id', async (req, res) => {
 
 app.post('/api/register', async (req, res) => {
   try {
+    let currentRegOpen = mockSettings.registrationOpen !== false;
+    if (isDbConnected) {
+      const regDoc = await Settings.findOne({ key: 'registrationOpen' });
+      if (regDoc && regDoc.value === false) {
+        currentRegOpen = false;
+      }
+    }
+
+    if (!currentRegOpen) {
+      return res.status(400).json({ error: 'Registration is currently closed' });
+    }
+
     const { email } = req.body;
     
     // Check if email already exists
@@ -865,6 +879,32 @@ app.put('/api/admin/registrations/:id/status', async (req, res) => {
       } catch (e) {
         console.error('Failed to send status email', e);
       }
+    }
+
+    res.json({ success: true, user });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/admin/registrations/:id/physical-test', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body; // 'untested', 'passed', 'failed'
+    let user;
+
+    if (isDbConnected) {
+      user = await Registration.findById(id);
+    } else {
+      user = mockRegistrations.find(r => r._id === id);
+    }
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    user.physicalTestStatus = status;
+
+    if (isDbConnected) {
+      await user.save();
     }
 
     res.json({ success: true, user });

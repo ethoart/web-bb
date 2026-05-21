@@ -28,6 +28,7 @@ export default function Home() {
   const [sponsorLogoSize, setSponsorLogoSize] = useState('20');
   const [termsAndConditions, setTermsAndConditions] = useState('');
   const [requireTcPopup, setRequireTcPopup] = useState(true);
+  const [registrationOpen, setRegistrationOpen] = useState(true);
   const [rulesPdfUrl, setRulesPdfUrl] = useState('');
   const [rulesPdfOriginalName, setRulesPdfOriginalName] = useState('');
   const [showTermsModal, setShowTermsModal] = useState(false);
@@ -73,6 +74,9 @@ export default function Home() {
           }
           if (data.requireTcPopup !== undefined) {
             setRequireTcPopup(data.requireTcPopup);
+          }
+          if (data.registrationOpen !== undefined) {
+            setRegistrationOpen(data.registrationOpen);
           }
           if (data.rulesPdfUrl) {
             setRulesPdfUrl(data.rulesPdfUrl);
@@ -376,7 +380,13 @@ export default function Home() {
               <div className="absolute bottom-0 left-0 w-4 h-4 border-b-4 border-l-4 border-[#E427F5] -translate-x-1 translate-y-1" />
               <div className="absolute bottom-0 right-0 w-4 h-4 border-b-4 border-r-4 border-[#E427F5] translate-x-1 translate-y-1" />
 
-              {regStatus === 'success' ? (
+              {!registrationOpen ? (
+                <div className="text-center py-16">
+                  <AlertCircle className="w-24 h-24 text-gray-500 mx-auto mb-6" />
+                  <h3 className="text-4xl font-tech font-bold italic uppercase mb-4 text-gray-400">Registration Closed</h3>
+                  <p className="text-gray-500 mb-8">We are no longer accepting new registrations for this event.</p>
+                </div>
+              ) : regStatus === 'success' ? (
                 <div className="text-center py-16">
                   <CheckCircle2 className="w-24 h-24 text-[#E427F5] mx-auto mb-6" />
                   <h3 className="text-4xl font-tech font-bold italic uppercase mb-4">Registration Received!</h3>
