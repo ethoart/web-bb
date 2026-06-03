@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link as LinkIcon, Upload, Trash2, Camera, Info, AlertCircle } from 'lucide-react';
+import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link as LinkIcon, Upload, Trash2, Camera, Info, AlertCircle, Download } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
 import SEO from '../components/SEO';
 
@@ -1197,7 +1197,7 @@ export default function Admin() {
                   <div className="bg-black p-8 border-2 border-[#333] space-y-8">
                     <div className="space-y-4">
                       <label className="flex items-center gap-2 text-lg font-tech italic font-bold text-[#E427F5] uppercase tracking-widest">
-                        <Trophy className="w-5 h-5" /> 1st Place Prize
+                        <Trophy className="w-5 h-5" /> Champions Prize
                       </label>
                       <input 
                         type="text" 
@@ -1528,9 +1528,13 @@ export default function Admin() {
               
               <div className="p-4 md:p-8">
                 <div className="flex items-center gap-4 mb-6 md:mb-8">
-                  <div className="bg-[#E427F5] text-black p-2 md:p-3">
-                    <Users className="w-6 h-6 md:w-8 md:h-8" />
-                  </div>
+                  {selectedTeam.teamLogo ? (
+                    <img src={selectedTeam.teamLogo} alt={selectedTeam.teamName} className="w-16 h-16 md:w-20 md:h-20 object-cover border-2 border-[#E427F5]" />
+                  ) : (
+                    <div className="bg-[#E427F5] text-black p-2 md:p-3">
+                      <Users className="w-6 h-6 md:w-8 md:h-8" />
+                    </div>
+                  )}
                   <div>
                     <h3 className="text-2xl md:text-3xl font-tech font-bold uppercase italic tracking-tighter text-white leading-none">
                       {selectedTeam.teamName}
@@ -1606,6 +1610,39 @@ export default function Admin() {
                         <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Additional Info</label>
                         <p className="text-white font-medium text-xs">{selectedTeam.robotAdditionalInfo || 'None'}</p>
                       </div>
+
+                      <div className="col-span-1 md:col-span-2 pt-2 pb-2">
+                        <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-2">Team Uploads & Images</label>
+                        <div className="flex flex-wrap gap-4">
+                          {selectedTeam.teamLogo && (
+                            <a href={selectedTeam.teamLogo} download className="flex items-center gap-2 bg-[#111] hover:bg-[#333] border border-[#E427F5] px-3 py-1.5 transition-colors text-xs text-[#E427F5] font-tech italic font-bold">
+                              <Download className="w-3 h-3" />
+                              Download Team Logo
+                            </a>
+                          )}
+                          {selectedTeam.teamMemberPhotos && selectedTeam.teamMemberPhotos.map((photo: string, index: number) => (
+                            <a key={index} href={photo} download className="flex items-center gap-2 bg-[#111] hover:bg-[#333] border border-[#E427F5] px-3 py-1.5 transition-colors text-xs text-[#E427F5] font-tech italic font-bold">
+                              <Download className="w-3 h-3" />
+                              Download Member Photo {index + 1}
+                            </a>
+                          ))}
+                          {selectedTeam.robotImage && (
+                            <a href={selectedTeam.robotImage} download className="flex items-center gap-2 bg-[#111] hover:bg-[#333] border border-[#E427F5] px-3 py-1.5 transition-colors text-xs text-[#E427F5] font-tech italic font-bold">
+                              <Download className="w-3 h-3" />
+                              Download Robot Photo
+                            </a>
+                          )}
+                          {!selectedTeam.teamLogo && !selectedTeam.robotImage && (!selectedTeam.teamMemberPhotos || selectedTeam.teamMemberPhotos.length === 0) && (
+                            <span className="text-white/40 text-xs italic">No uploads available</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Mini Bot</label>
+                        <p className="text-white font-medium text-xs">{selectedTeam.hasMiniBot ? 'Yes' : 'No'}</p>
+                      </div>
+
                       <div>
                         <label className="text-[10px] font-tech uppercase italic text-white/40 block mb-1">Robot Status</label>
                         <div className="flex items-center gap-2">

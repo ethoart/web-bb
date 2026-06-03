@@ -496,9 +496,14 @@ export default function Profile() {
           </div>
         ) : (
           <div className="space-y-12">
-            <h2 className="text-5xl md:text-7xl font-tech font-black italic uppercase tracking-tighter text-white leading-none">
-              WELCOME, <br/><span className="text-[#E427F5]">{user.teamName}</span>
-            </h2>
+            <div className="flex items-center gap-6 md:gap-8">
+              {user.teamLogo && (
+                <img src={user.teamLogo} alt={user.teamName} className="w-20 h-20 md:w-32 md:h-32 object-cover border-4 border-[#E427F5] bg-black" />
+              )}
+              <h2 className="text-5xl md:text-7xl font-tech font-black italic uppercase tracking-tighter text-white leading-none">
+                WELCOME, <br/><span className="text-[#E427F5]">{user.teamName}</span>
+              </h2>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Profile Details */}

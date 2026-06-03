@@ -571,11 +571,11 @@ export default function Home() {
           </h2>
           
           <div className="grid grid-cols-1 gap-8 md:gap-12 max-w-3xl mx-auto">
-            {/* 1st Place */}
+            {/* Champions */}
             <div className="bg-[#0A0A0A] border-4 border-[#333] p-10 relative group hover:border-[#E427F5] transition-colors transform -skew-x-6">
               <div className="transform skew-x-6">
                 <Trophy className="w-20 h-20 text-[#E427F5] mx-auto mb-6" />
-                <h3 className="text-3xl font-tech font-bold italic uppercase tracking-widest text-gray-400 mb-2">1st Place</h3>
+                <h3 className="text-3xl font-tech font-bold italic uppercase tracking-widest text-gray-400 mb-2">Champions</h3>
                 <div className="text-7xl md:text-9xl font-tech font-black italic text-white">
                   {isRevealed ? prizePool.first : <Gift className="w-24 h-24 mx-auto inline-block animate-pulse text-[#E427F5]" />}
                 </div>
