@@ -253,6 +253,9 @@ const RegistrationSchema = new mongoose.Schema({
   robotWeapons: String,
   robotAdditionalInfo: String,
   robotImage: String,
+  teamLogo: String,
+  teamMemberPhotos: [String],
+  hasMiniBot: { type: Boolean, default: false },
   robotStatus: { type: String, enum: ['pending', 'approved', 'rejected'], default: 'pending' },
   physicalTestStatus: { type: String, enum: ['untested', 'passed', 'failed'], default: 'untested' },
   participated: { type: Boolean, default: false },
@@ -717,6 +720,93 @@ app.post('/api/profile/robot', upload.single('image'), async (req, res) => {
     }
 
     res.json({ success: true, user });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/profile/extra', upload.fields([
+  { name: 'teamLogo', maxCount: 1 },
+  { name: 'teamMemberPhotos', maxCount: 10 }
+]), async (req, res) => {
+  try {
+    const { userId, teamName, phone, robotWeight, robotDimensions, robotWeapons, hasMiniBot } = req.body;
+    let user;
+
+    if (isDbConnected) {
+      user = await Registration.findById(userId);
+    } else {
+      user = mockRegistrations.find(r => r._id === userId);
+    }
+
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    if (teamName) user.teamName = teamName;
+    if (phone) user.phone = phone;
+    if (robotWeight) user.robotWeight = robotWeight;
+    if (robotDimensions) user.robotDimensions = robotDimensions;
+    if (robotWeapons) user.robotWeapons = robotWeapons;
+    if (hasMiniBot !== undefined) user.hasMiniBot = hasMiniBot === 'true';
+
+    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+    if (files && files['teamLogo'] && files['teamLogo'][0]) {
+      user.teamLogo = `/uploads/${files['teamLogo'][0].filename}`;
+    }
+
+    if (files && files['teamMemberPhotos']) {
+      user.teamMemberPhotos = files['teamMemberPhotos'].map(f => `/uploads/${f.filename}`);
+    }
+
+    if (isDbConnected) {
+      await user.save();
+    }
+
+    res.json({ success: true, user });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/admin/notify-extra-details', async (req, res) => {
+  try {
+    let users = [];
+    if (isDbConnected) {
+      users = await Registration.find({});
+    } else {
+      users = mockRegistrations;
+    }
+    
+    let sentCount = 0;
+    if (process.env.SMTP_USER || process.env.GMAIL_USER) {
+      const fromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || process.env.GMAIL_USER;
+      for (const user of users) {
+        try {
+          await transporter.sendMail({
+            from: `"Bot Bash" <${fromEmail}>`,
+            to: user.email,
+            subject: "URGENT: IMPORTANT UPDATE FOR BOT BASH TEAMS - Action Required Before June 04",
+            html: getEmailTemplate('Action Required', `
+              <p>Hello <strong>${user.teamName}</strong>,</p>
+              <p>We need you to provide urgent updates to your registration profile before June 04.</p>
+              <p>Please log in to your profile and submit the following details:</p>
+              <ul>
+                <li>Team Logo (PNG format, 1000x1000 resolution)</li>
+                <li>Team members' individual photos</li>
+                <li>Team contact number</li>
+                <li>Robot Weight and Dimensions</li>
+                <li>Weapons used</li>
+                <li>Mini bot availability</li>
+              </ul>
+              <p>Log in to your dashboard to submit this information immediately.</p>
+            `)
+          });
+          sentCount++;
+        } catch(e) {
+          console.error('Failed to send extra details email to', user.email, e);
+        }
+      }
+    }
+    res.json({ success: true, count: sentCount });
   } catch (err: any) {
     res.status(500).json({ error: err.message });
   }

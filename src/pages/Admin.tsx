@@ -351,6 +351,24 @@ export default function Admin() {
     }
   };
 
+  const blastUrgentDetailsMail = async () => {
+    if (!window.confirm('Are you sure you want to send the Urgent Update Request to ALL registered users?')) return;
+    setSendingMail(true);
+    try {
+      const res = await fetch('/api/admin/notify-extra-details', { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Successfully sent to ${data.count} teams!`);
+      } else {
+        alert('Failed: ' + data.error);
+      }
+    } catch (err) {
+      alert('Error triggering blast');
+    } finally {
+      setSendingMail(false);
+    }
+  };
+
   const handleSendMail = async (e: React.FormEvent) => {
     e.preventDefault();
     setSendingMail(true);
@@ -966,9 +984,18 @@ export default function Admin() {
 
               {activeTab === 'mail' && (
                 <div className="max-w-3xl">
-                  <h2 className="text-3xl font-tech font-bold uppercase italic tracking-wider mb-8 flex items-center gap-3 text-[#E427F5]">
-                    <Mail className="w-8 h-8" /> Mail Portal
-                  </h2>
+                  <div className="flex items-center justify-between mb-8">
+                    <h2 className="text-3xl font-tech font-bold uppercase italic tracking-wider flex items-center gap-3 text-[#E427F5]">
+                      <Mail className="w-8 h-8" /> Mail Portal
+                    </h2>
+                    <button
+                      onClick={blastUrgentDetailsMail}
+                      disabled={sendingMail}
+                      className="bg-yellow-500 text-black px-4 py-2 font-tech font-bold italic uppercase transform -skew-x-12 hover:bg-white transition-colors"
+                    >
+                      <span className="block transform skew-x-12">Blast Urgent DB Update Request</span>
+                    </button>
+                  </div>
                   <div className="bg-black p-8 border-2 border-[#333]">
                     <form onSubmit={handleSendMail} className="space-y-6">
                       <div className="space-y-2">

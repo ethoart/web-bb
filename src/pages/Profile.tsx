@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { LogOut, User, Shield, CheckCircle2, XCircle, Clock, QrCode, Bot, Upload, Info, Home } from 'lucide-react';
+import { LogOut, User, Shield, CheckCircle2, XCircle, Clock, QrCode, Bot, Upload, Info, Home, AlertCircle, Settings } from 'lucide-react';
 
 import Footer from '../components/Footer';
 import SEO from '../components/SEO';
@@ -30,6 +30,15 @@ export default function Profile() {
   const [robotPreview, setRobotPreview] = useState<string | null>(null);
   const [submittingRobot, setSubmittingRobot] = useState(false);
   const [robotMessage, setRobotMessage] = useState('');
+
+  // Extra Form State
+  const [teamNameUpdate, setTeamNameUpdate] = useState('');
+  const [teamContactUpdate, setTeamContactUpdate] = useState('');
+  const [miniBotUpdate, setMiniBotUpdate] = useState('false');
+  const [teamLogoFile, setTeamLogoFile] = useState<File | null>(null);
+  const [teamMemberFiles, setTeamMemberFiles] = useState<FileList | null>(null);
+  const [submittingExtra, setSubmittingExtra] = useState(false);
+  const [extraMessage, setExtraMessage] = useState('');
 
   useEffect(() => {
     fetch('/api/settings')
@@ -68,6 +77,10 @@ export default function Profile() {
       setRobotWeapons(user.robotWeapons || '');
       setRobotAdditionalInfo(user.robotAdditionalInfo || '');
       setRobotPreview(user.robotImage || null);
+      
+      setTeamNameUpdate(user.teamName || '');
+      setTeamContactUpdate(user.phone || '');
+      setMiniBotUpdate(user.hasMiniBot ? 'true' : 'false');
     }
   }, [user]);
 
@@ -202,6 +215,47 @@ export default function Profile() {
       setRobotMessage('Network error');
     } finally {
       setSubmittingRobot(false);
+    }
+  };
+
+  const handleExtraSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmittingExtra(true);
+    setExtraMessage('');
+    try {
+      const formData = new FormData();
+      formData.append('userId', user._id);
+      formData.append('teamName', teamNameUpdate);
+      formData.append('phone', teamContactUpdate);
+      formData.append('robotWeight', robotWeight);
+      formData.append('robotDimensions', robotDimensions);
+      formData.append('robotWeapons', robotWeapons);
+      formData.append('hasMiniBot', miniBotUpdate);
+      
+      if (teamLogoFile) {
+        formData.append('teamLogo', teamLogoFile);
+      }
+      if (teamMemberFiles) {
+        for (let i = 0; i < teamMemberFiles.length; i++) {
+          formData.append('teamMemberPhotos', teamMemberFiles[i]);
+        }
+      }
+
+      const res = await fetch('/api/profile/extra', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data.user);
+        setExtraMessage('Urgent updates submitted successfully!');
+      } else {
+        setExtraMessage(data.error || 'Failed to submit updates');
+      }
+    } catch (err) {
+      setExtraMessage('Network error');
+    } finally {
+      setSubmittingExtra(false);
     }
   };
 
@@ -651,6 +705,134 @@ export default function Profile() {
                     </span>
                   </button>
                 </div>
+              </form>
+            </div>
+
+            {/* URGENT UPDATE SECTION */}
+            <div className="bg-[#111] p-6 border-l-4 border-yellow-500 mb-8 max-w-4xl mx-auto shadow-2xl relative">
+              <div className="flex items-center gap-4 mb-8">
+                <div className="bg-yellow-500 text-black p-3">
+                  <AlertCircle className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-3xl font-tech font-bold uppercase italic tracking-tighter text-white leading-none">
+                    URGENT: TEAM & EQUIPMENT UPDATES
+                  </h3>
+                  <p className="text-yellow-500 font-tech uppercase italic tracking-widest text-sm mt-1">Submission Deadline: June 04</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleExtraSubmit} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Team Name</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={teamNameUpdate}
+                      onChange={e => setTeamNameUpdate(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-yellow-500 transition-colors font-medium"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Team Contact Number</label>
+                    <input 
+                      required
+                      type="text" 
+                      value={teamContactUpdate}
+                      onChange={e => setTeamContactUpdate(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-yellow-500 transition-colors font-medium"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                   <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Team Logo (PNG 1000x1000)</label>
+                    <input 
+                      type="file" 
+                      accept=".png"
+                      onChange={e => e.target.files && setTeamLogoFile(e.target.files[0])}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-yellow-500 transition-colors font-medium file:bg-yellow-500 file:border-none file:text-black file:font-tech file:font-bold file:italic file:px-4 file:py-1 file:mr-4 hover:file:bg-white"
+                    />
+                    {user.teamLogo && <div className="text-green-500 text-xs font-bold uppercase"><CheckCircle2 className="w-4 h-4 inline mr-1" /> Logo Uploaded</div>}
+                  </div>
+                  <div className="space-y-2">
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Team Members Photos</label>
+                    <input 
+                      type="file" 
+                      multiple
+                      accept="image/*"
+                      onChange={e => e.target.files && setTeamMemberFiles(e.target.files)}
+                      className="w-full bg-black border-2 border-[#333] px-4 py-3 text-white focus:outline-none focus:border-yellow-500 transition-colors font-medium file:bg-yellow-500 file:border-none file:text-black file:font-tech file:font-bold file:italic file:px-4 file:py-1 file:mr-4 hover:file:bg-white"
+                    />
+                    {user.teamMemberPhotos && user.teamMemberPhotos.length > 0 && <div className="text-green-500 text-xs font-bold uppercase"><CheckCircle2 className="w-4 h-4 inline mr-1" /> {user.teamMemberPhotos.length} Photos Uploaded</div>}
+                  </div>
+                </div>
+
+                <div className="bg-[#222] p-4 border border-[#333]">
+                  <h4 className="text-yellow-500 font-tech uppercase italic font-bold mb-4 flex items-center gap-2"><Settings className="w-5 h-5"/> Verify Equipment Stats</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase italic text-gray-400 block mb-1">Robot Weight</label>
+                      <input 
+                        required
+                        type="text" 
+                        value={robotWeight}
+                        onChange={e => setRobotWeight(e.target.value)}
+                        className="w-full bg-black border-2 border-[#333] px-3 py-2 text-white focus:outline-none focus:border-yellow-500 transition-colors text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase italic text-gray-400 block mb-1">Dimensions</label>
+                      <input 
+                        required
+                        type="text" 
+                        value={robotDimensions}
+                        onChange={e => setRobotDimensions(e.target.value)}
+                        className="w-full bg-black border-2 border-[#333] px-3 py-2 text-white focus:outline-none focus:border-yellow-500 transition-colors text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-xs uppercase italic text-gray-400 block mb-1">Mini Bot Available</label>
+                      <select 
+                        value={miniBotUpdate}
+                        onChange={e => setMiniBotUpdate(e.target.value)}
+                        className="w-full bg-black border-2 border-[#333] px-3 py-2 text-white focus:outline-none focus:border-yellow-500 transition-colors text-sm"
+                      >
+                        <option value="false">No Mini Bot</option>
+                        <option value="true">Yes, Mini Bot Available</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="mt-4 space-y-2">
+                    <label className="text-xs uppercase italic text-gray-400 block mb-1">Weapons Used</label>
+                    <textarea 
+                      required
+                      value={robotWeapons}
+                      onChange={e => setRobotWeapons(e.target.value)}
+                      className="w-full bg-black border-2 border-[#333] px-3 py-2 text-white focus:outline-none focus:border-yellow-500 transition-colors text-sm h-16 resize-none"
+                    />
+                  </div>
+                </div>
+
+                {extraMessage && (
+                  <div className={`p-4 text-center font-bold uppercase italic tracking-wider ${
+                    extraMessage.includes('successfully') ? 'bg-green-900/30 text-green-400 border border-green-500/50' : 'bg-red-900/30 text-red-400 border border-red-500/50'
+                  }`}>
+                    {extraMessage}
+                  </div>
+                )}
+
+                <button 
+                  type="submit"
+                  disabled={submittingExtra}
+                  className="w-full bg-yellow-500 text-black font-tech text-2xl uppercase italic font-black py-4 hover:bg-white transition-colors transform -skew-x-12 disabled:opacity-50"
+                >
+                  <span className="block transform skew-x-12">
+                    {submittingExtra ? 'SUBMITTING...' : 'SUBMIT URGENT UPDATES'}
+                  </span>
+                </button>
               </form>
             </div>
 
