@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { motion, useScroll, useMotionValueEvent } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link as LinkIcon, Upload, Trash2, Camera, Info, AlertCircle, Download } from 'lucide-react';
+import { Users, Settings, Trophy, Eye, EyeOff, Save, RefreshCw, CheckCircle2, XCircle, Mail, QrCode, ScanLine, Image, Link as LinkIcon, Upload, Trash2, Camera, Info, AlertCircle, Download, FileText } from 'lucide-react';
 import { Html5Qrcode, Html5QrcodeScanner } from 'html5-qrcode';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 import SEO from '../components/SEO';
 
 export default function Admin() {
@@ -231,6 +233,36 @@ export default function Admin() {
     } finally {
       if (showLoading) setLoading(false);
     }
+  };
+
+  const exportApprovedTeamsToPDF = () => {
+    const doc = new jsPDF();
+    const approvedTeams = registrations.filter(r => r.status === 'approved');
+    
+    doc.setFontSize(18);
+    doc.text('Approved Teams - BOT BASH', 14, 22);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Total Approved Teams: ${approvedTeams.length}`, 14, 30);
+
+    const tableData = approvedTeams.map((team, index) => [
+      index + 1,
+      team.teamName || 'N/A',
+      team.captainName || 'N/A',
+      team.phone || 'N/A',
+      team.memberCount || 1,
+    ]);
+
+    autoTable(doc, {
+      startY: 36,
+      head: [['#', 'Team Name', 'Captain Name', 'Contact Number', 'Members']],
+      body: tableData,
+      theme: 'grid',
+      headStyles: { fillColor: [228, 39, 245], textColor: [255, 255, 255] },
+    });
+
+    doc.save('Approved_Teams_BotBash.pdf');
   };
 
   const fetchData = async () => {
@@ -746,6 +778,13 @@ export default function Admin() {
                       >
                         <RefreshCw className="w-5 h-5" />
                         <span className="hidden sm:inline">Refresh</span>
+                      </button>
+                      <button 
+                        onClick={exportApprovedTeamsToPDF}
+                        className="bg-yellow-500 text-black px-4 py-2 border-2 border-yellow-500 font-tech italic uppercase flex items-center gap-2 hover:bg-white transition-colors"
+                      >
+                        <FileText className="w-5 h-5" />
+                        <span className="hidden sm:inline">Export PDF</span>
                       </button>
                       <div className="flex gap-2">
                         <div className="bg-black px-4 py-2 border-2 border-[#333] font-tech italic uppercase flex items-center">
