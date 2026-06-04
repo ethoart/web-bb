@@ -664,7 +664,7 @@ export default function Profile() {
 
                 <div className="space-y-6">
                   <div className="space-y-2">
-                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Robot Image</label>
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Robot Image <span className="text-sm font-medium text-gray-500">(Optional)</span></label>
                     <div className="relative group cursor-pointer">
                       <input 
                         type="file" 
@@ -753,7 +753,7 @@ export default function Profile() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                    <div className="space-y-2">
-                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Team Logo (PNG 1000x1000)</label>
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Team Logo (PNG 1000x1000) <span className="text-sm font-medium text-gray-500">(Optional)</span></label>
                     <input 
                       type="file" 
                       accept=".png"
@@ -763,7 +763,7 @@ export default function Profile() {
                     {user.teamLogo && <div className="text-green-500 text-xs font-bold uppercase"><CheckCircle2 className="w-4 h-4 inline mr-1" /> Logo Uploaded</div>}
                   </div>
                   <div className="space-y-2">
-                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Team Members Photos</label>
+                    <label className="font-tech text-xl uppercase italic font-bold text-gray-300">Team Members Photos <span className="text-sm font-medium text-gray-500">(Optional)</span></label>
                     <input 
                       type="file" 
                       multiple
