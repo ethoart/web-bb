@@ -55,6 +55,9 @@ export default function Admin() {
 
   // Modal State
   const [selectedTeam, setSelectedTeam] = useState<any>(null);
+  const [editMode, setEditMode] = useState<boolean>(false);
+  const [editedTeam, setEditedTeam] = useState<any>(null);
+  const [savingTeam, setSavingTeam] = useState<boolean>(false);
 
   // Gallery State
   const [galleryImages, setGalleryImages] = useState<any[]>([]);
@@ -265,6 +268,48 @@ export default function Admin() {
     doc.save('Approved_Teams_BotBash.pdf');
   };
 
+  const exportApprovedTeamsToCSV = () => {
+    const approvedTeams = registrations.filter(r => r.status === 'approved');
+    
+    const headers = [
+      'Team Name', 'Captain Name', 'Email', 'Phone', 'Member Count', 
+      'Robot Name', 'Status', 'Robot Status', 'Physical Test Status',
+      'Robot Height', 'Robot Weight', 'Robot Dimensions', 'Robot Materials',
+      'Robot Power Source', 'Robot Weapons', 'Robot Additional Info', 'Has Mini Bot'
+    ];
+    
+    const rows = approvedTeams.map(team => [
+      `"${team.teamName || ''}"`,
+      `"${team.captainName || ''}"`,
+      `"${team.email || ''}"`,
+      `"${team.phone || ''}"`,
+      `"${team.memberCount || 1}"`,
+      `"${team.robotName || ''}"`,
+      `"${team.status || ''}"`,
+      `"${team.robotStatus || ''}"`,
+      `"${team.physicalTestStatus || ''}"`,
+      `"${team.robotHeight || ''}"`,
+      `"${team.robotWeight || ''}"`,
+      `"${team.robotDimensions || ''}"`,
+      `"${team.robotMaterials || ''}"`,
+      `"${team.robotPowerSource || ''}"`,
+      `"${team.robotWeapons || ''}"`,
+      `"${team.robotAdditionalInfo || ''}"`,
+      `"${team.hasMiniBot ? 'Yes' : 'No'}"`
+    ]);
+    
+    const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'Approved_Teams_BotBash.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const fetchData = async () => {
     setLoading(true);
     try {
@@ -368,6 +413,31 @@ export default function Admin() {
       }
     } catch (err) {
       console.error('Error updating physical test status:', err);
+    }
+  };
+
+  const handleSaveTeamDetails = async () => {
+    if (!editedTeam) return;
+    setSavingTeam(true);
+    try {
+      const res = await fetch(`/api/admin/registrations/${editedTeam._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editedTeam)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRegistrations(prev => prev.map(r => r._id === editedTeam._id ? data.user : r));
+        setSelectedTeam(data.user);
+        setEditMode(false);
+      } else {
+        alert('Failed to update details');
+      }
+    } catch (err) {
+      console.error('Error saving team details:', err);
+      alert('Error saving details');
+    } finally {
+      setSavingTeam(false);
     }
   };
 
@@ -785,6 +855,13 @@ export default function Admin() {
                       >
                         <FileText className="w-5 h-5" />
                         <span className="hidden sm:inline">Export PDF</span>
+                      </button>
+                      <button 
+                        onClick={exportApprovedTeamsToCSV}
+                        className="bg-blue-500 text-black px-4 py-2 border-2 border-blue-500 font-tech italic uppercase flex items-center gap-2 hover:bg-white transition-colors"
+                      >
+                        <FileText className="w-5 h-5" />
+                        <span className="hidden sm:inline">Export CSV</span>
                       </button>
                       <div className="flex gap-2">
                         <div className="bg-black px-4 py-2 border-2 border-[#333] font-tech italic uppercase flex items-center">
@@ -1566,23 +1643,113 @@ export default function Admin() {
               </button>
               
               <div className="p-4 md:p-8">
-                <div className="flex items-center gap-4 mb-6 md:mb-8">
-                  {selectedTeam.teamLogo ? (
-                    <img src={selectedTeam.teamLogo} alt={selectedTeam.teamName} className="w-16 h-16 md:w-20 md:h-20 object-cover border-2 border-[#E427F5]" />
-                  ) : (
-                    <div className="bg-[#E427F5] text-black p-2 md:p-3">
-                      <Users className="w-6 h-6 md:w-8 md:h-8" />
+                <div className="flex items-center justify-between mb-6 md:mb-8 flex-wrap gap-4">
+                  <div className="flex items-center gap-4">
+                    {selectedTeam.teamLogo ? (
+                      <img src={selectedTeam.teamLogo} alt={selectedTeam.teamName} className="w-16 h-16 md:w-20 md:h-20 object-cover border-2 border-[#E427F5]" />
+                    ) : (
+                      <div className="bg-[#E427F5] text-black p-2 md:p-3">
+                        <Users className="w-6 h-6 md:w-8 md:h-8" />
+                      </div>
+                    )}
+                    <div>
+                      <h3 className="text-2xl md:text-3xl font-tech font-bold uppercase italic tracking-tighter text-white leading-none">
+                        {selectedTeam.teamName}
+                      </h3>
+                      <p className="text-[#E427F5] font-tech uppercase italic tracking-widest text-xs md:text-sm mt-1">Team Details</p>
                     </div>
-                  )}
-                  <div>
-                    <h3 className="text-2xl md:text-3xl font-tech font-bold uppercase italic tracking-tighter text-white leading-none">
-                      {selectedTeam.teamName}
-                    </h3>
-                    <p className="text-[#E427F5] font-tech uppercase italic tracking-widest text-xs md:text-sm mt-1">Team Details</p>
                   </div>
+                  {!editMode && (
+                    <button 
+                      onClick={() => { setEditMode(true); setEditedTeam(selectedTeam); }}
+                      className="bg-blue-500 text-black px-4 py-2 font-tech font-bold uppercase italic transform -skew-x-12 hover:bg-white transition-colors"
+                    >
+                      <span className="block transform skew-x-12">Edit Details</span>
+                    </button>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+                {editMode ? (
+                  <div className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Team Name</label>
+                        <input type="text" value={editedTeam.teamName} onChange={e => setEditedTeam({...editedTeam, teamName: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Captain Name</label>
+                        <input type="text" value={editedTeam.captainName} onChange={e => setEditedTeam({...editedTeam, captainName: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Email</label>
+                        <input type="email" value={editedTeam.email} onChange={e => setEditedTeam({...editedTeam, email: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Phone</label>
+                        <input type="text" value={editedTeam.phone} onChange={e => setEditedTeam({...editedTeam, phone: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Country</label>
+                        <input type="text" value={editedTeam.country || ''} onChange={e => setEditedTeam({...editedTeam, country: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Members Count</label>
+                        <input type="number" value={editedTeam.memberCount || 1} onChange={e => setEditedTeam({...editedTeam, memberCount: parseInt(e.target.value)})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Robot Name</label>
+                        <input type="text" value={editedTeam.robotName || ''} onChange={e => setEditedTeam({...editedTeam, robotName: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                    </div>
+
+                    <h4 className="text-base font-tech font-bold uppercase italic text-[#E427F5] mt-6 mb-4 border-t border-[#333] pt-6">Robot Configuration</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Height (cm)</label>
+                        <input type="text" value={editedTeam.robotHeight || ''} onChange={e => setEditedTeam({...editedTeam, robotHeight: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Weight (kg)</label>
+                        <input type="text" value={editedTeam.robotWeight || ''} onChange={e => setEditedTeam({...editedTeam, robotWeight: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Dimensions</label>
+                        <input type="text" value={editedTeam.robotDimensions || ''} onChange={e => setEditedTeam({...editedTeam, robotDimensions: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Materials</label>
+                        <input type="text" value={editedTeam.robotMaterials || ''} onChange={e => setEditedTeam({...editedTeam, robotMaterials: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Power Source</label>
+                        <input type="text" value={editedTeam.robotPowerSource || ''} onChange={e => setEditedTeam({...editedTeam, robotPowerSource: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Weapons</label>
+                        <input type="text" value={editedTeam.robotWeapons || ''} onChange={e => setEditedTeam({...editedTeam, robotWeapons: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white" />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="text-xs font-tech uppercase text-white/60">Additional Info</label>
+                        <textarea value={editedTeam.robotAdditionalInfo || ''} onChange={e => setEditedTeam({...editedTeam, robotAdditionalInfo: e.target.value})} className="w-full bg-[#111] border border-[#333] px-3 py-2 text-white min-h-[80px]" />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="checkbox" checked={editedTeam.hasMiniBot || false} onChange={e => setEditedTeam({...editedTeam, hasMiniBot: e.target.checked})} className="w-4 h-4 accent-[#E427F5]" />
+                          <span className="text-xs font-tech uppercase text-white">Has Mini Bot</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-4 mt-6 border-t border-[#333] pt-6">
+                      <button onClick={() => setEditMode(false)} className="px-6 py-2 bg-[#333] text-white font-tech uppercase italic font-bold">Cancel</button>
+                      <button onClick={handleSaveTeamDetails} disabled={savingTeam} className="px-6 py-2 bg-blue-500 text-black font-tech uppercase italic font-bold disabled:opacity-50">
+                        {savingTeam ? 'Saving...' : 'Save Changes'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <div className="space-y-4 md:space-y-6">
                     <div>
                       <label className="text-[10px] md:text-xs font-tech uppercase italic text-white/40 block mb-1">Robot Name</label>
@@ -1781,6 +1948,8 @@ export default function Admin() {
                     <span className="block transform skew-x-12">Close</span>
                   </button>
                 </div>
+                </>
+                )}
               </div>
             </motion.div>
           </div>

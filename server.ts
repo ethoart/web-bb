@@ -871,6 +871,35 @@ app.get('/api/admin/registrations', async (req, res) => {
   }
 });
 
+app.put('/api/admin/registrations/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updates = req.body;
+    let user;
+
+    if (isDbConnected) {
+      user = await Registration.findByIdAndUpdate(
+        id,
+        { $set: updates },
+        { new: true }
+      );
+    } else {
+      const index = mockRegistrations.findIndex((r: any) => r._id === id);
+      if (index !== -1) {
+        mockRegistrations[index] = { ...mockRegistrations[index], ...updates };
+        user = mockRegistrations[index];
+      }
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'Team not found' });
+    }
+    res.json({ message: 'Team details updated successfully', user });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.put('/api/admin/registrations/:id/status', async (req, res) => {
   try {
     const { id } = req.params;
